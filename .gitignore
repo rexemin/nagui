@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/nagui
+nagui.so
+nagui.dylib
+nagui.dll
+nagui.a
+nagui.lib
+nagui-test-*
+*.exe
+*.o
+*.obj
+*.lst
