@@ -1,3 +1,4 @@
+# D ignores
 .dub
 docs.json
 __dummy.html
@@ -14,4 +15,5 @@ nagui-test-*
 *.obj
 *.lst
 
+# Python ignores
 env/
