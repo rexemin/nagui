@@ -17,3 +17,4 @@ nagui-test-*
 
 # Python ignores
 env/
+src/app/__pycache__
