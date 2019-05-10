@@ -1,26 +1,22 @@
-import numpy as np
-
 import plotly.offline as py
 import plotly.graph_objs as go
 
-def find_vertex_id(graph, vertex):
-    for v in graph.vs:
-        if v.attributes()['name'] == vertex:
-            return v.index
+import numpy as np
+import networkx as nx
 
 def get_edges_coordinates(graph, layout):
     coordinates = [[], []]
 
-    for e in graph.es:
-        e_v = e.tuple
-        coordinates[0] += [layout[e_v[0]][0], layout[e_v[1]][0], None]
-        coordinates[1] += [layout[e_v[0]][1], layout[e_v[1]][1], None]
+    for edge in graph.edges():
+        coordinates[0] += [layout[edge[0]][0], layout[edge[1]][0], None]
+        coordinates[1] += [layout[edge[0]][1], layout[edge[1]][1], None]
 
     return coordinates
 
 def update_trace(current_trace, current_graph):
-    graph_layout = np.array(current_graph.layout('kamada_kawai'))
+    graph_layout = nx.layout.kamada_kawai_layout(current_graph, weight=None)
     edges_coordinates = get_edges_coordinates(current_graph, graph_layout)
+    vertices_coordinates = np.array(list(graph_layout.values())).T
 
     traces = [
         go.Scatter(
@@ -37,21 +33,22 @@ def update_trace(current_trace, current_graph):
             name='Edges'
         ),
         go.Scatter(
-            x=graph_layout.T[0],
-            y=graph_layout.T[1],
+            x=vertices_coordinates[0],
+            y=vertices_coordinates[1],
             mode='markers+text',
             marker={
                 'symbol': 'circle',
                 'size': 50,
                 'color': 'black'
             },
-            text=[v['name'] for v in current_graph.vs],
+            text=[v for v in current_graph.nodes()],
             textfont={
                 'size': 28,
                 'color': 'white'
             },
             opacity=0.8,
-            name='Vertices'
+            name='Vertices',
+            hoverinfo='text'
         ),
     ]
 
