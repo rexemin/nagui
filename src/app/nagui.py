@@ -243,9 +243,9 @@ def run_algorithm(n_clicks, algorithm):
     global file_id
     global original_graph
     if n_clicks is not None and n_clicks > 0:
-        file.save_graph(current_graph, file_id)
+        file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
-        # sbp.run(["../algo/graph", file-id, algorithm])
+        # sbp.run(["../algo/graph.out", file_path, algorithm])
         # current_graph = file.load_graph(file_id)
         # elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
         # elements = elements['elements']['nodes'] + elements['elements']['edges']

@@ -5,20 +5,20 @@ import datastruct.undirected.graph;
 
 void main(string[] args)
 {
-    // auto outputFile = File("../../data/data.txt", "w");
-    // args = args[1..$];
-    // foreach(arg; args) {
-        // outputFile.writeln(arg);
-    // }
-
-    auto file_path = args[1];
+    auto filePath = args[1];
     auto algorithm = args[2];
 
-    auto graph = new Graph!(string, int)();
-    // graph = graph.load_from_json(file_path);
+    auto graph = new Graph!(string, long)();
+    graph = graph.loadFromNxJSON(filePath);
+    graph.print();
 
     if(algorithm == "fleury") {
-        writeln(algorithm);
+        // writeln(algorithm);
+        bool ia;
+        auto circuit = graph.fleury(ia);
+        foreach(c; circuit) {
+            writeln(c);
+        }
     } else if(algorithm == "bfs") {
         writeln(algorithm);
     } else if(algorithm == "idfs") {

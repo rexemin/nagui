@@ -237,6 +237,44 @@ class Graph(VType, EType) {
     }
 
     /**
+     * Takes a Networkx JSON file and creates a Graph from it.
+     *
+     * Params:
+     *      filePath = Path to the JSON file
+     *
+     * Returns: Graph instance with the information contained in filePath.
+     */
+    public auto loadFromNxJSON(string filePath)
+    {
+        import std.json;
+        import std.stdio: File;
+
+        // Reading and parsing the input graph.
+        auto outputFile = File(filePath, "r");
+        auto fileContents = outputFile.readln();
+        JSONValue jsonGraph = parseJSON(fileContents);
+
+        // Creating the new graph from the JSON.
+        auto graph = new Graph!(VType, EType)();
+        foreach(vertex; jsonGraph["nodes"].array) {
+            graph.addVertex(vertex["id"].str);
+        }
+        foreach(edge; jsonGraph["links"].array) {
+            graph.addEdge(edge["source"].str, edge["target"].str, edge["weight"].integer);
+        }
+
+        return graph;
+    }
+
+    /**
+     *
+     */
+    public void saveToNxJSON(string filePath)
+    {
+
+    }
+
+    /**
      * Returns true if name exists in the graph, false otherwise.
      */
     public bool isVertexOnGraph(VType name) const
