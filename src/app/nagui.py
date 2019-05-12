@@ -119,7 +119,8 @@ app.layout = html.Div(children=[
                             id='drop-algo-graph',
                             options=[
                                 {'label': 'Fleury', 'value': 'fleury'},
-                                {'label': 'DFS', 'value': 'dfs'},
+                                {'label': 'Iterative DFS', 'value': 'idfs'},
+                                {'label': 'Recursive DFS', 'value': 'rdfs'},
                                 {'label': 'BFS', 'value': 'bfs'},
                                 {'label': 'Kruskal', 'value': 'kruskal'},
                                 {'label': 'Prim', 'value': 'prim'},
@@ -155,7 +156,7 @@ app.layout = html.Div(children=[
                             'selector': 'edge',
                             'style': {
                                 'label': 'data(weight)',
-                                'curve-style': 'bezier'
+                                'curve-style': 'bezier',
                             }
                         },
                     ],
@@ -179,6 +180,8 @@ Updating the graph every time a vertex or an edge are added/removed.
      Input(component_id='btn-edge-graph', component_property='n_clicks'),
      Input(component_id='btn-rm-vertex-graph', component_property='n_clicks'),
      Input(component_id='btn-rm-edge-graph', component_property='n_clicks'),
+     Input(component_id='btn-run-graph', component_property='n_clicks_timestamp'),
+     Input(component_id='btn-reset-graph', component_property='n_clicks_timestamp'),
      Input(component_id='btn-empty-graph', component_property='n_clicks')],
     [State(component_id='vertex-graph', component_property='value'),
      State(component_id='source-graph', component_property='value'),
@@ -187,11 +190,14 @@ Updating the graph every time a vertex or an edge are added/removed.
      State(component_id='rm-source-graph', component_property='value'),
      State(component_id='rm-terminus-graph', component_property='value'),
      State(component_id='weight-graph', component_property='value'),
+     State('drop-algo-graph', 'value'),
      State('graph', 'elements')]
 )
-def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_empty, vertex_value, source, terminus,
-    rm_vertex, rm_source, rm_terminus, weight, elements):
+def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, btn_empty, vertex_value, source, terminus,
+    rm_vertex, rm_source, rm_terminus, weight, algorithm, elements):
     global current_graph
+    global file_id
+    global original_graph
 
     if btn_vertex is not None and btn_vertex > 0 and vertex_value != "":
         if not current_graph.has_node(vertex_value):
@@ -213,11 +219,66 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_empty, vertex_val
             current_graph.remove_edge(rm_source, rm_terminus)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+    elif btn_run is not None and (btn_reset is None or btn_run > btn_reset):
+        file_path = file.save_graph(current_graph, file_id)
+        original_graph = current_graph
+        sbp.run(["../algo/graph.out", file_path, str(file_id), algorithm])
+        current_graph = file.load_graph(file_id)
+        elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
+        elements = elements['elements']['nodes'] + elements['elements']['edges']
+        file_id += 1
+    elif btn_reset is not None and (btn_run is None or btn_reset > btn_run):
+        current_graph = original_graph
+        elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
+        elements = elements['elements']['nodes'] + elements['elements']['edges']
+        file_id -= 1
     elif btn_empty is not None and btn_empty:
         current_graph.clear()
         elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
         elements = elements['elements']['nodes'] + elements['elements']['edges']
     return elements
+
+"""
+Changing the graph's stylesheet everytime there's a change between types.
+"""
+@app.callback(
+    Output('graph', 'stylesheet'),
+    [Input('graph', 'elements')]
+)
+def update_graph_stylesheet(graph):
+    global current_graph
+    if type(current_graph) == nx.classes.graph.Graph:
+        return [
+            {
+                'selector': 'node',
+                'style': {
+                    'label': 'data(id)'
+                }
+            },
+            {
+                'selector': 'edge',
+                'style': {
+                    'label': 'data(weight)',
+                    'curve-style': 'bezier',
+                }
+            }
+        ]
+    else:
+        return [
+            {
+                'selector': 'node',
+                'style': {
+                    'label': 'data(id)'
+                }
+            },
+            {
+                'selector': 'edge',
+                'style': {
+                    'curve-style': 'bezier',
+                    'target-arrow-shape': 'vee'
+                }
+            }
+        ]
 
 """
 Changing the information displayed at the top of the page every time the graph
@@ -233,24 +294,25 @@ def update_graph_info(graph):
 """
 Input/Output of the current graph to/from text files.
 """
-@app.callback(
-    Output(component_id='header-graph', component_property='children'),
-   # [Input(component_id='btn-load-graph', component_property='n_clicks'),
-    [Input(component_id='btn-run-graph', component_property='n_clicks')],
-    [State('drop-algo-graph', 'value')]
-)
-def run_algorithm(n_clicks, algorithm):
-    global file_id
-    global original_graph
-    if n_clicks is not None and n_clicks > 0:
-        file_path = file.save_graph(current_graph, file_id)
-        original_graph = current_graph
-        # sbp.run(["../algo/graph.out", file_path, algorithm])
-        # current_graph = file.load_graph(file_id)
-        # elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
-        # elements = elements['elements']['nodes'] + elements['elements']['edges']
-        # file_id += 1
-    return "Graphs"
+# @app.callback(
+#     Output(component_id='header-graph', component_property='children'),
+#    # [Input(component_id='btn-load-graph', component_property='n_clicks'),
+#     [Input(component_id='btn-run-graph', component_property='n_clicks')],
+#     [State('drop-algo-graph', 'value')]
+# )
+# def run_algorithm(n_clicks, algorithm):
+#     global file_id
+#     global original_graph
+#     if n_clicks is not None and n_clicks > 0:
+#         file_path = file.save_graph(current_graph, file_id)
+#         original_graph = current_graph
+#         sbp.run(["../algo/graph.out", file_path, algorithm])
+#         temp = file.load_graph(file_id)
+#         print(temp)
+#         # elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
+#         # elements = elements['elements']['nodes'] + elements['elements']['edges']
+#         # file_id += 1
+#     return "Graphs"
 
 """
 Resetting the Inputs every time their assigned button gets pressed.

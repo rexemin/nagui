@@ -8,5 +8,30 @@ def save_graph(graph, file_id):
     return "../../data/{}.json".format(file_id)
 
 def load_graph(file_id):
-    with open("../../data/{}-final.json".format(file_id), 'w') as outfile:
-        pass
+    with open("../../data/{}-final.txt".format(file_id), 'r') as f:
+        header = f.readline().split()[0]
+        graph = nx.Graph()
+        if header == 'graph':
+            graph = nx.Graph()
+        elif header == 'digraph':
+            graph = nx.DiGraph()
+        else: # header == 'exception'. An exception ocurred over in D land.
+            pass
+
+        f.readline() # Skipping the vertex header.
+        item = f.readline().split()[0] # First vertex.
+        while item != 'edges':
+            graph.add_node(item)
+            item = f.readline().split()[0]
+
+        item = f.readline() # Reading the next line after the edges header.
+        while item.split()[0] != 'extra' and item.split()[0] != 'end':
+            source, terminus, weight = item.split()
+            graph.add_edge(source, terminus, weight=int(weight))
+            item = f.readline()
+
+    return graph
+
+# graph = load_graph(0)
+# print(nx.classes.function.info(graph))
+# print(nx.node_link_data(graph))

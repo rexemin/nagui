@@ -3,7 +3,7 @@
  * during the course.
  *
  * Author: Ivan A. Moreno Soto
- * Date: April 22, 2019
+ * Date: May 12, 2019
  */
 module datastruct.undirected.graph;
 
@@ -267,11 +267,42 @@ class Graph(VType, EType) {
     }
 
     /**
+     * Saves the graph in a text file with a format useful
+     * for Networkx (in Python).
+     * Text file format:
+     *      graph header -> graph
+     *      vertices header -> vertex
+     *      vertices -> name of every vertex in the digraph
+     *      arcs header -> edges
+     *      arcs -> source terminus weight
+     *      extra information -> key value
+     *      footer -> end
      *
+     * Params:
+     *      id = ID for the text file
      */
-    public void saveToNxJSON(string filePath)
+    public void saveToFile(string id)
     {
+        import std.stdio: File;
+        import std.string: format;
 
+        string filePath = format("../../data/%s-final.txt", id);
+        auto outputFile = File(filePath, "w");
+        // Header.
+        outputFile.writeln("graph");
+        // Vertices.
+        outputFile.writeln("vertex");
+        foreach(vertex; vertices.byKey) {
+            outputFile.writeln(vertex);
+        }
+        // Arcs.
+        outputFile.writeln("edges");
+        foreach(vertex; vertices.byKey) {
+            foreach(arc; vertices[vertex].edges) {
+                outputFile.writeln(format("%s %s %s", arc.source, arc.terminus, arc.weight));
+            }
+        }
+        outputFile.writeln("end");
     }
 
     /**
@@ -350,9 +381,12 @@ class Graph(VType, EType) {
      * Throws: Exception if there's a vertex in the graph with odd degree or
      * the graph is empty.
      */
-    import std.container: DList;
-    public DList!(VType) fleury(ref bool isGraphConnected)
+    // import std.container: DList;
+    // public DList!(VType) fleury(ref bool isGraphConnected)
+    public auto fleury(ref bool isGraphConnected)
     {
+        import datastruct.directed.digraph: Digraph;
+        import std.container: DList;
         import std.exception: enforce;
         import std.stdio: writeln;
         import std.algorithm: canFind;
@@ -360,7 +394,14 @@ class Graph(VType, EType) {
         enforce(doAllVerticesHaveEvenDegree(), "Can't run Fleury's algorithm, not every vertex has even degree.");
 
         auto graph = copy();
+        auto circuit = new Digraph!(VType, EType)();
         isGraphConnected = false;
+
+        if(graph.numVertices == 1 && graph.numEdges == 0) {
+            isGraphConnected = true;
+            circuit.addVertex(graph.vertices.keys[0]);
+            return circuit;
+        }
 
         // Auxiliary booleans.
         bool[VType] touched;
@@ -369,7 +410,7 @@ class Graph(VType, EType) {
         }
 
         VType next;
-        auto circuit = DList!VType();
+        // auto circuit = DList!VType();
         auto available = DList!VType(); // Stack of vertices.
         auto lonely = DList!VType(); // Queue of vertices.
         VType stack, queue; // Current 'pointers' for the stack and queue.
@@ -402,8 +443,43 @@ class Graph(VType, EType) {
         }
 
         // Time to reconstruct that path.
-        circuit ~= lonely[];
-        circuit ~= available[];
+        int lonelySize = 0;
+        foreach(vertex; lonely) {
+            circuit.addVertex(vertex);
+            lonelySize++;
+        }
+
+        int availableSize = 0;
+        foreach(vertex; available) {
+            circuit.addVertex(vertex);
+            availableSize++;
+        }
+
+        // Adding every arc.
+        auto lonelyArray = new VType[lonelySize];
+        int i = 0;
+        foreach(vertex; lonely) {
+            lonelyArray[i] = vertex;
+            i++;
+        }
+        for(auto j = 0; j < lonelySize - 1; j++) {
+            circuit.addArc(lonelyArray[j], lonelyArray[j+1]);
+        }
+
+        auto availableArray = new VType[availableSize];
+        i = 0;
+        foreach(vertex; available) {
+            availableArray[i] = vertex;
+            i++;
+        }
+        for(auto j = 0; j < availableSize - 1; j++) {
+            circuit.addArc(availableArray[j], availableArray[j+1]);
+        }
+
+        circuit.addArc(lonelyArray[lonelySize-1], availableArray[0]);
+
+        // circuit ~= lonely[];
+        // circuit ~= available[];
 
         if(!canFind(touched.values, false) && graph.numEdges == 0) {
             isGraphConnected = true;

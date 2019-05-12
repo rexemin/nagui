@@ -6,28 +6,32 @@ import datastruct.undirected.graph;
 void main(string[] args)
 {
     auto filePath = args[1];
-    auto algorithm = args[2];
+    auto id = args[2];
+    auto algorithm = args[3];
+    bool isConnected, hasTree;
+    long treeWeight;
 
     auto graph = new Graph!(string, long)();
     graph = graph.loadFromNxJSON(filePath);
     graph.print();
 
     if(algorithm == "fleury") {
-        // writeln(algorithm);
-        bool ia;
-        auto circuit = graph.fleury(ia);
-        foreach(c; circuit) {
-            writeln(c);
-        }
+        auto circuit = graph.fleury(isConnected);
+        circuit.saveToFile(id);
     } else if(algorithm == "bfs") {
-        writeln(algorithm);
+        auto tree = graph.bfs(isConnected);
+        tree.saveToFile(id);
     } else if(algorithm == "idfs") {
-        writeln(algorithm);
+        auto tree = graph.idfs(isConnected);
+        tree.saveToFile(id);
     } else if(algorithm == "rdfs") {
-        writeln(algorithm);
+        auto tree = graph.rdfs(isConnected);
+        tree.saveToFile(id);
     } else if(algorithm == "kruskal") {
-        writeln(algorithm);
+        auto tree = graph.kruskal(hasTree, treeWeight);
+        tree.saveToFile(id);
     } else if(algorithm == "prim") {
-        writeln(algorithm);
+        auto tree = graph.prim(hasTree, treeWeight);
+        tree.saveToFile(id);
     }
 }
