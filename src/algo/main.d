@@ -1,4 +1,4 @@
-import std.stdio: write, writeln;
+import std.stdio: write, writeln, File;
 import std.string: format;
 
 import datastruct.undirected.graph;
@@ -15,23 +15,31 @@ void main(string[] args)
     graph = graph.loadFromNxJSON(filePath);
     graph.print();
 
-    if(algorithm == "fleury") {
-        auto circuit = graph.fleury(isConnected);
-        circuit.saveToFile(id);
-    } else if(algorithm == "bfs") {
-        auto tree = graph.bfs(isConnected);
-        tree.saveToFile(id);
-    } else if(algorithm == "idfs") {
-        auto tree = graph.idfs(isConnected);
-        tree.saveToFile(id);
-    } else if(algorithm == "rdfs") {
-        auto tree = graph.rdfs(isConnected);
-        tree.saveToFile(id);
-    } else if(algorithm == "kruskal") {
-        auto tree = graph.kruskal(hasTree, treeWeight);
-        tree.saveToFile(id);
-    } else if(algorithm == "prim") {
-        auto tree = graph.prim(hasTree, treeWeight);
-        tree.saveToFile(id);
+    try{
+        if(algorithm == "fleury") {
+            auto circuit = graph.fleury(isConnected);
+            circuit.saveToFile(id);
+        } else if(algorithm == "bfs") {
+            auto tree = graph.bfs(isConnected);
+            tree.saveToFile(id);
+        } else if(algorithm == "idfs") {
+            auto tree = graph.idfs(isConnected);
+            tree.saveToFile(id);
+        } else if(algorithm == "rdfs") {
+            auto tree = graph.rdfs(isConnected);
+            tree.saveToFile(id);
+        } else if(algorithm == "kruskal") {
+            auto tree = graph.kruskal(hasTree, treeWeight);
+            tree.saveToFile(id);
+        } else if(algorithm == "prim") {
+            auto tree = graph.prim(hasTree, treeWeight);
+            tree.saveToFile(id);
+        }
+    } catch(Exception e) {
+        string outPath = format("../../data/%s-final.txt", id);
+        auto outputFile = File(outPath, "w");
+        // Header.
+        outputFile.writeln("exception");
+        outputFile.writeln(e.msg);
     }
 }

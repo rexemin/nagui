@@ -6,6 +6,7 @@ import dash_cytoscape as cyto
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
+import numpy as np
 import networkx as nx
 
 # draw and file for the wacky stuff with D.
@@ -18,6 +19,7 @@ vis_height = '750px'
 current_graph = nx.Graph()
 original_graph = nx.Graph()
 file_id = 0
+info = ''
 
 #--- End of global variables
 
@@ -176,13 +178,13 @@ Updating the graph every time a vertex or an edge are added/removed.
 """
 @app.callback(
     Output(component_id='graph', component_property='elements'),
-    [Input(component_id='btn-vertex-graph', component_property='n_clicks'),
-     Input(component_id='btn-edge-graph', component_property='n_clicks'),
-     Input(component_id='btn-rm-vertex-graph', component_property='n_clicks'),
-     Input(component_id='btn-rm-edge-graph', component_property='n_clicks'),
+    [Input(component_id='btn-vertex-graph', component_property='n_clicks_timestamp'),
+     Input(component_id='btn-edge-graph', component_property='n_clicks_timestamp'),
+     Input(component_id='btn-rm-vertex-graph', component_property='n_clicks_timestamp'),
+     Input(component_id='btn-rm-edge-graph', component_property='n_clicks_timestamp'),
      Input(component_id='btn-run-graph', component_property='n_clicks_timestamp'),
      Input(component_id='btn-reset-graph', component_property='n_clicks_timestamp'),
-     Input(component_id='btn-empty-graph', component_property='n_clicks')],
+     Input(component_id='btn-empty-graph', component_property='n_clicks_timestamp')],
     [State(component_id='vertex-graph', component_property='value'),
      State(component_id='source-graph', component_property='value'),
      State(component_id='terminus-graph', component_property='value'),
@@ -198,45 +200,66 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
     global current_graph
     global file_id
     global original_graph
+    global info
 
-    if btn_vertex is not None and btn_vertex > 0 and vertex_value != "":
+    info = ''
+    buttons = np.array([btn if btn is not None else 0 for btn in (btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, btn_empty)])
+    btn_pressed = np.argmax(buttons)
+
+    if btn_vertex is not None and btn_pressed == 0 and vertex_value != "":
         if not current_graph.has_node(vertex_value):
             current_graph.add_node(vertex_value)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
-    elif btn_edge is not None and btn_edge > 0 and source != "" and terminus != "" and weight is not None:
+    elif btn_edge is not None and btn_pressed == 1 and source != "" and terminus != "" and weight is not None:
         if current_graph.has_node(source) and current_graph.has_node(terminus):
             current_graph.add_edge(source, terminus, weight=weight)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
-    elif btn_rm_v is not None and btn_rm_v > 0 and rm_vertex != "":
+    elif btn_rm_v is not None and btn_pressed == 2 and rm_vertex != "":
         if current_graph.has_node(rm_vertex):
             current_graph.remove_node(rm_vertex)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
-    elif btn_rm_e is not None and btn_rm_e > 0 and rm_source != "" and rm_terminus != "":
+    elif btn_rm_e is not None and btn_pressed == 3 and rm_source != "" and rm_terminus != "":
         if current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus) and current_graph.has_edge(rm_source, rm_terminus):
             current_graph.remove_edge(rm_source, rm_terminus)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
-    elif btn_run is not None and (btn_reset is None or btn_run > btn_reset):
+    elif btn_run is not None and btn_pressed == 4:
         file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
         sbp.run(["../algo/graph.out", file_path, str(file_id), algorithm])
-        current_graph = file.load_graph(file_id)
+        result, is_a_graph = file.load_graph(file_id)
+        if is_a_graph:
+            current_graph = result
+            file_id += 1
+        else:
+            info = result
         elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
         elements = elements['elements']['nodes'] + elements['elements']['edges']
-        file_id += 1
-    elif btn_reset is not None and (btn_run is None or btn_reset > btn_run):
+    elif btn_reset is not None and btn_pressed == 5:
         current_graph = original_graph
         elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
         elements = elements['elements']['nodes'] + elements['elements']['edges']
-        file_id -= 1
-    elif btn_empty is not None and btn_empty:
+        if file_id > 1:
+            file_id -= 1
+    elif btn_empty is not None and btn_pressed == 6:
         current_graph.clear()
         elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
         elements = elements['elements']['nodes'] + elements['elements']['edges']
     return elements
+
+"""
+Displaying additional information,
+"""
+@app.callback(
+    Output('additional-info-graph', 'children'),
+    [Input('graph', 'elements')]
+)
+def update_additional_info(graph):
+    global info
+    return info
 
 """
 Changing the graph's stylesheet everytime there's a change between types.
