@@ -470,8 +470,11 @@ class Graph(VType, EType) {
             lonelyArray[i] = vertex;
             i++;
         }
+
+        EType currentEdge = 1;
         for(auto j = 0; j < lonelySize - 1; j++) {
-            circuit.addArc(lonelyArray[j], lonelyArray[j+1]);
+            circuit.addArc(lonelyArray[j], lonelyArray[j+1], currentEdge);
+            currentEdge++;
         }
 
         auto availableArray = new VType[availableSize];
@@ -480,11 +483,15 @@ class Graph(VType, EType) {
             availableArray[i] = vertex;
             i++;
         }
+
+        circuit.addArc(lonelyArray[lonelySize-1], availableArray[0], currentEdge);
+        currentEdge++;
+
         for(auto j = 0; j < availableSize - 1; j++) {
-            circuit.addArc(availableArray[j], availableArray[j+1]);
+            circuit.addArc(availableArray[j], availableArray[j+1], currentEdge);
+            currentEdge++;
         }
 
-        circuit.addArc(lonelyArray[lonelySize-1], availableArray[0]);
 
         // circuit ~= lonely[];
         // circuit ~= available[];

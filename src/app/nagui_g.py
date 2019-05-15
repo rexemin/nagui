@@ -111,7 +111,7 @@ app.layout = html.Div(children=[
             dbc.Col([
                 dbc.Row([
                     dbc.Col([
-                        html.H4('The graph has 0 vertice(s) and 0 edge(s).', id='info-graph', className='mx-3'),
+                        html.H4('The graph has 0 node(s) and 0 edge(s).', id='info-graph', className='mx-3'),
                     ], width=4),
                     dbc.Col([
                         html.H3('', id='additional-info-graph', className='mx-3')
@@ -211,21 +211,39 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
             current_graph.add_node(vertex_value)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        else:
+            info = 'Vertex {} is already on the graph.'.format(vertex_value)
     elif btn_edge is not None and btn_pressed == 1 and source != "" and terminus != "" and weight is not None:
         if current_graph.has_node(source) and current_graph.has_node(terminus):
             current_graph.add_edge(source, terminus, weight=weight)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        elif not current_graph.has_node(source) and current_graph.has_node(terminus):
+            info = 'Vertex {} is not on the graph.'.format(source)
+        elif current_graph.has_node(source) and not current_graph.has_node(terminus):
+            info = 'Vertex {} is not on the graph.'.format(terminus)
+        else:
+            info = 'Vertices {} and {} are not on the graph.'.format(source, terminus)
     elif btn_rm_v is not None and btn_pressed == 2 and rm_vertex != "":
         if current_graph.has_node(rm_vertex):
             current_graph.remove_node(rm_vertex)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        else:
+            info = 'Vertex {} is not on the graph.'.format(rm_vertex)
     elif btn_rm_e is not None and btn_pressed == 3 and rm_source != "" and rm_terminus != "":
         if current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus) and current_graph.has_edge(rm_source, rm_terminus):
             current_graph.remove_edge(rm_source, rm_terminus)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        elif not current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus):
+            info = 'Vertex {} is not on the graph.'.format(rm_source)
+        elif current_graph.has_node(rm_source) and not current_graph.has_node(rm_terminus):
+            info = 'Vertex {} is not on the graph.'.format(rm_terminus)
+        elif not current_graph.has_node(rm_source) and not current_graph.has_node(rm_terminus):
+            info = 'Vertices {} and {} are not on the graph.'.format(rm_source, rm_terminus)
+        else:
+            info = "There isn't an edge between vertices {} and {}.".format(rm_source, rm_terminus)
     elif btn_run is not None and btn_pressed == 4:
         file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
@@ -297,6 +315,7 @@ def update_graph_stylesheet(graph):
             {
                 'selector': 'edge',
                 'style': {
+                    'label': 'data(weight)',
                     'curve-style': 'bezier',
                     'target-arrow-shape': 'vee'
                 }
@@ -312,7 +331,7 @@ is changed.
     [Input(component_id='graph', component_property='elements')]
 )
 def update_graph_info(graph):
-    return "The graph has {} vertice(s) and {} edge(s)".format(current_graph.number_of_nodes(), current_graph.number_of_edges())
+    return "The graph has {} node(s) and {} edge(s)".format(current_graph.number_of_nodes(), current_graph.number_of_edges())
 
 """
 Input/Output of the current graph to/from text files.
@@ -366,7 +385,7 @@ def reset_terminus_input(n_clicks):
     [Input(component_id='btn-edge-graph', component_property='n_clicks')]
 )
 def reset_weight_input(n_clicks):
-    return 0
+    return 1
 
 @app.callback(
     Output(component_id='rm-vertex-graph', component_property='value'),
