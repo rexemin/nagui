@@ -16,8 +16,8 @@ import subprocess as sbp
 #--- Global variables
 
 vis_height = '750px'
-current_graph = nx.Graph()
-original_graph = nx.Graph()
+current_graph = nx.DiGraph()
+original_graph = nx.DiGraph()
 file_id = 0
 info = ''
 
@@ -111,32 +111,40 @@ app.layout = html.Div(children=[
             dbc.Col([
                 dbc.Row([
                     dbc.Col([
-                        html.H4('The graph has 0 vertice(s) and 0 edge(s).', id='info-graph', className='mx-3'),
+                        html.H4('The digraph has 0 vertice(s) and 0 edge(s).', id='info-graph', className='mx-3'),
                     ], width=4),
                     dbc.Col([
                         html.H3('', id='additional-info-graph', className='mx-3')
                     ], width=4),
                     dbc.Col([
-                        dcc.Dropdown(
-                            id='drop-algo-graph',
-                            options=[
-                                {'label': 'Fleury', 'value': 'fleury'},
-                                {'label': 'Iterative DFS', 'value': 'idfs'},
-                                {'label': 'Recursive DFS', 'value': 'rdfs'},
-                                {'label': 'BFS', 'value': 'bfs'},
-                                {'label': 'Kruskal', 'value': 'kruskal'},
-                                {'label': 'Prim', 'value': 'prim'},
-                            ],
-                            clearable=False,
-                            value='fleury'
-                        ),
-                    ], width=2),
-                    dbc.Col([
-                        # dbc.Button('Previous step', color='info', id='btn-prev-graph', className='mx-2'),
-                        # dbc.Button('Next step', color='info', id='btn-next-graph', className='mx-2'),
-                        dbc.Button('Run', color='info', id='btn-run-graph', className='mx-2'),
-                        dbc.Button('Reset', color='warning', id='btn-reset-graph', className='mx-2'),
-                    ], width=2)
+                        dbc.Row([
+                            dbc.Col([
+                                html.H5('Starting vertex:'),
+                            ], width=5),
+                            dbc.Col([
+                                dbc.Input(id='start-vertex', type='text', className='m-1')
+                            ], width=7)
+                        ], justify='center', align='center', className='m-2'),
+                        dbc.Row([
+                            dbc.Col([
+                                dcc.Dropdown(
+                                    id='drop-algo-graph',
+                                    options=[
+                                        {'label': 'Dijkstra', 'value': 'dijkstra'},
+                                        {'label': 'Floyd-Warshall', 'value': 'floyd'},
+                                    ],
+                                    clearable=False,
+                                    value='dijkstra'
+                                )
+                            ], width=6),
+                            dbc.Col([
+                                # dbc.Button('Previous step', color='info', id='btn-prev-graph', className='mx-2'),
+                                # dbc.Button('Next step', color='info', id='btn-next-graph', className='mx-2'),
+                                dbc.Button('Run', color='info', id='btn-run-graph', className='mx-2'),
+                                dbc.Button('Reset', color='warning', id='btn-reset-graph', className='mx-2'),
+                            ], width=6)
+                        ], align='center')
+                    ], width=4),
                 ], justify='between'),
                 cyto.Cytoscape(
                     id='graph',
@@ -159,6 +167,7 @@ app.layout = html.Div(children=[
                             'style': {
                                 'label': 'data(weight)',
                                 'curve-style': 'bezier',
+                                'target-arrow-shape': 'vee'
                             }
                         },
                     ],
@@ -192,11 +201,12 @@ Updating the graph every time a vertex or an edge are added/removed.
      State(component_id='rm-source-graph', component_property='value'),
      State(component_id='rm-terminus-graph', component_property='value'),
      State(component_id='weight-graph', component_property='value'),
+     State('start-vertex', 'value'),
      State('drop-algo-graph', 'value'),
      State('graph', 'elements')]
 )
 def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, btn_empty, vertex_value, source, terminus,
-    rm_vertex, rm_source, rm_terminus, weight, algorithm, elements):
+    rm_vertex, rm_source, rm_terminus, weight, start, algorithm, elements):
     global current_graph
     global file_id
     global original_graph
@@ -227,17 +237,19 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
     elif btn_run is not None and btn_pressed == 4:
-        file_path = file.save_graph(current_graph, file_id)
-        original_graph = current_graph
-        sbp.run(["../algo/graph.out", file_path, str(file_id), algorithm])
-        result, is_a_graph = file.load_graph(file_id)
-        if is_a_graph:
-            current_graph = result
-            file_id += 1
-        else:
-            info = result
-        elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
-        elements = elements['elements']['nodes'] + elements['elements']['edges']
+        print(start)
+        if (algorithm == 'dijkstra' and start != '' and start != ' ' and start is not None) or algorithm == 'floyd':
+            file_path = file.save_graph(current_graph, file_id)
+            original_graph = current_graph
+            sbp.run(["../algo/digraph.out", file_path, str(file_id), algorithm, start])
+            result, is_a_graph = file.load_graph(file_id)
+            if is_a_graph:
+                current_graph = result
+                file_id += 1
+            else:
+                info = result
+            elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
+            elements = elements['elements']['nodes'] + elements['elements']['edges']
     elif btn_reset is not None and btn_pressed == 5:
         current_graph = original_graph
         elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
@@ -262,48 +274,6 @@ def update_additional_info(graph):
     return info
 
 """
-Changing the graph's stylesheet everytime there's a change between types.
-"""
-@app.callback(
-    Output('graph', 'stylesheet'),
-    [Input('graph', 'elements')]
-)
-def update_graph_stylesheet(graph):
-    global current_graph
-    if type(current_graph) == nx.classes.graph.Graph:
-        return [
-            {
-                'selector': 'node',
-                'style': {
-                    'label': 'data(id)'
-                }
-            },
-            {
-                'selector': 'edge',
-                'style': {
-                    'label': 'data(weight)',
-                    'curve-style': 'bezier',
-                }
-            }
-        ]
-    else:
-        return [
-            {
-                'selector': 'node',
-                'style': {
-                    'label': 'data(id)'
-                }
-            },
-            {
-                'selector': 'edge',
-                'style': {
-                    'curve-style': 'bezier',
-                    'target-arrow-shape': 'vee'
-                }
-            }
-        ]
-
-"""
 Changing the information displayed at the top of the page every time the graph
 is changed.
 """
@@ -312,30 +282,7 @@ is changed.
     [Input(component_id='graph', component_property='elements')]
 )
 def update_graph_info(graph):
-    return "The graph has {} vertice(s) and {} edge(s)".format(current_graph.number_of_nodes(), current_graph.number_of_edges())
-
-"""
-Input/Output of the current graph to/from text files.
-"""
-# @app.callback(
-#     Output(component_id='header-graph', component_property='children'),
-#    # [Input(component_id='btn-load-graph', component_property='n_clicks'),
-#     [Input(component_id='btn-run-graph', component_property='n_clicks')],
-#     [State('drop-algo-graph', 'value')]
-# )
-# def run_algorithm(n_clicks, algorithm):
-#     global file_id
-#     global original_graph
-#     if n_clicks is not None and n_clicks > 0:
-#         file_path = file.save_graph(current_graph, file_id)
-#         original_graph = current_graph
-#         sbp.run(["../algo/graph.out", file_path, algorithm])
-#         temp = file.load_graph(file_id)
-#         print(temp)
-#         # elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
-#         # elements = elements['elements']['nodes'] + elements['elements']['edges']
-#         # file_id += 1
-#     return "Graphs"
+    return "The digraph has {} vertice(s) and {} edge(s)".format(current_graph.number_of_nodes(), current_graph.number_of_edges())
 
 """
 Resetting the Inputs every time their assigned button gets pressed.

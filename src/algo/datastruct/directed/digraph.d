@@ -403,6 +403,36 @@ class Digraph(VType, EType) {
     }
 
     /**
+     * Takes a Networkx JSON file and creates a Digraph from it.
+     *
+     * Params:
+     *      filePath = Path to the JSON file
+     *
+     * Returns: Digraph instance with the information contained in filePath.
+     */
+    public auto loadFromNxJSON(string filePath)
+    {
+        import std.json;
+        import std.stdio: File;
+
+        // Reading and parsing the input graph.
+        auto outputFile = File(filePath, "r");
+        auto fileContents = outputFile.readln();
+        JSONValue jsonGraph = parseJSON(fileContents);
+
+        // Creating the new graph from the JSON.
+        auto graph = new Digraph!(VType, EType)();
+        foreach(vertex; jsonGraph["nodes"].array) {
+            graph.addVertex(vertex["id"].str);
+        }
+        foreach(edge; jsonGraph["links"].array) {
+            graph.addArc(edge["source"].str, edge["target"].str, edge["weight"].integer);
+        }
+
+        return graph;
+    }
+
+    /**
      * Saves the digraph in a text file with a format useful
      * for Networkx (in Python).
      * Text file format:
@@ -416,8 +446,9 @@ class Digraph(VType, EType) {
      *
      * Params:
      *      id = ID for the text file
+     *      additionalInfo = Additional information accompanying the digraph
      */
-    public void saveToFile(string id)
+    public void saveToFile(string id, string[] additionalInfo = null)
     {
         import std.stdio: File;
         import std.string: format;
@@ -436,6 +467,13 @@ class Digraph(VType, EType) {
         foreach(vertex; vertices.byKey) {
             foreach(arc; vertices[vertex].outArcs) {
                 outputFile.writeln(format("%s %s %s", arc.source, arc.terminus, arc.weight));
+            }
+        }
+
+        if(additionalInfo !is null) {
+            outputFile.writeln("extra");
+            foreach(extra; additionalInfo) {
+                outputFile.writeln(extra);
             }
         }
         outputFile.writeln("end");

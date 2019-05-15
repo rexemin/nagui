@@ -281,7 +281,7 @@ class Graph(VType, EType) {
      * Params:
      *      id = ID for the text file
      */
-    public void saveToFile(string id)
+    public void saveToFile(string id, string[] additionalInfo = null)
     {
         import std.stdio: File;
         import std.string: format;
@@ -302,6 +302,14 @@ class Graph(VType, EType) {
                 outputFile.writeln(format("%s %s %s", arc.source, arc.terminus, arc.weight));
             }
         }
+        // Extra information.
+        if(additionalInfo !is null) {
+            outputFile.writeln("extra");
+            foreach(extra; additionalInfo) {
+                outputFile.writeln(extra);
+            }
+        }
+
         outputFile.writeln("end");
     }
 

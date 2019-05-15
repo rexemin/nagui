@@ -12,6 +12,7 @@ def load_graph(file_id):
         isGraph = True
         header = f.readline().split()[0]
         graph = nx.Graph()
+        info = ''
         if header == 'graph':
             graph = nx.Graph()
         elif header == 'digraph':
@@ -33,7 +34,10 @@ def load_graph(file_id):
                 graph.add_edge(source, terminus, weight=int(weight))
                 item = f.readline()
 
-    return graph, isGraph
+            if item.split()[0] == 'extra':
+                info = f.readline()
+
+    return graph, isGraph, info
 
 # graph = load_graph(0)
 # print(nx.classes.function.info(graph))
