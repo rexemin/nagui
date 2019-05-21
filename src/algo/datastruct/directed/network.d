@@ -255,10 +255,14 @@ class Network(EType) {
      *
      * Params:
      *      filePath = Path to the JSON file
+     *      sources = Array in which to store the sources of the network
+     *      sinks = Array in which to store the sinks of the network
+     *      vertexRestrictions = Dictionary in which to store vertices' restrictions
+     *      productions = Dictionary in which to store vertices' productions/demands
      *
      * Returns: Digraph instance with the information contained in filePath.
      */
-    public auto loadFromNxJSON(string filePath)
+    public auto loadFromNxJSON(string filePath, ref string[] sources, ref string[] sinks, ref EType[][string] vertexRestrictions, ref EType[string] productions)
     {
         import std.json;
         import std.stdio: File;
@@ -272,6 +276,17 @@ class Network(EType) {
         auto graph = new Network!(EType)();
         foreach(vertex; jsonGraph["nodes"].array) {
             graph.addVertex(vertex["id"].str);
+            if(vertex["type"].str == "source") {
+                sources ~= vertex["id"].str;
+            } else if(vertex["type"].str == "sink") {
+                sinks ~= vertex["id"].str;
+            }
+
+            if("min_flow" in vertex) {
+                vertexRestrictions[vertex["id"].str] = [vertex["max_flow"].integer, vertex["min_flow"].integer];
+            } else if("flow" in vertex) {
+                productions[vertex["id"].str] = vertex["flow"].integer;
+            }
         }
         foreach(edge; jsonGraph["links"].array) {
             graph.addArc(edge["source"].str, edge["target"].str, edge["weight"].integer, edge["restriction"].integer, edge["flow"].integer, edge["cost"].integer);
@@ -286,7 +301,7 @@ class Network(EType) {
      * Text file format:
      *      network header -> network
      *      vertices header -> vertex
-     *      vertices -> name of every vertex in the digraph
+     *      vertices -> name type r restrictions p production/demand
      *      arcs header -> edges
      *      arcs -> source terminus weight restriction flow cost
      *      extra information -> key value
@@ -294,21 +309,51 @@ class Network(EType) {
      *
      * Params:
      *      id = ID for the text file
-     *      additionalInfo = Additional information accompanying the digraph
+     *      sources = Array with the sources of the network
+     *      sinks = Array with the sinks of the network
+     *      vertexRestrictions = Dictionary with the vertices' restrictions
+     *      productions = Dictionary with the vertices' productions/demands
+     *      additionalInfo = Additional information accompanying the network
      */
-    public void saveToFile(string id, string[] additionalInfo = null)
+    public void saveToFile(string id, string[] sources, string[] sinks, EType[][string] vertexRestrictions, EType[string] productions, string[] additionalInfo = null)
     {
         import std.stdio: File;
         import std.string: format;
+        import std.algorithm.searching: canFind;
 
         string filePath = format("../../data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("network");
         // Vertices.
+        string type, minRest, maxRest, prod;
+
         outputFile.writeln("vertex");
         foreach(vertex; vertices.byKey) {
-            outputFile.writeln(vertex);
+            if(canFind(sources, vertex)) {
+                type = "source";
+            } else if(canFind(sinks, vertex)) {
+                type = "sink";
+            } else {
+                type = "pass";
+            }
+
+            if(vertex in vertexRestrictions) {
+                minRest = format("%s", vertexRestrictions[vertex][1]);
+                maxRest = format("%s", vertexRestrictions[vertex][0]);
+            } else {
+                minRest = "";
+                maxRest = "";
+            }
+
+            if(vertex in productions) {
+                prod = format("%s", productions[vertex]);
+            } else {
+                prod = "";
+            }
+
+            // outputFile.writeln(vertex);
+            outputFile.writeln(format("%s %s r %s %s p %s", vertex, type, minRest, maxRest, prod));
         }
         // Arcs.
         outputFile.writeln("edges");

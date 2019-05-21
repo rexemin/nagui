@@ -23,6 +23,10 @@ info = ''
 
 #--- End of global variables
 
+def update_vertices_info(graph, vertex = None)
+    # If vertex is None, update every vertex.
+    pass
+
 #--- GUI
 
 external_stylesheets = [dbc.themes.BOOTSTRAP] #['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -397,13 +401,14 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
     elif btn_run is not None and btn_pressed == 4:
         file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
-        # sbp.run(["../algo/digraph.out", file_path, str(file_id), algorithm, start])
-        # result, is_a_graph, info = file.load_graph(file_id)
-        # if is_a_graph:
-            # current_graph = result
-            # file_id += 1
-        # else:
-            # info = result
+        sbp.run(["../algo/network.out", file_path, str(file_id), algorithm])
+        result, is_a_graph, info = file.load_graph(file_id)
+        if is_a_graph:
+            current_graph = result
+            # update_vertices_info(current_graph)
+            file_id += 1
+        else:
+            info = result
         elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
         elements = elements['elements']['nodes'] + elements['elements']['edges']
     elif btn_reset is not None and btn_pressed == 5:

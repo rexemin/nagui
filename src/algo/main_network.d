@@ -8,26 +8,28 @@ void main(string[] args)
     auto filePath = args[1];
     auto id = args[2];
     auto algorithm = args[3];
-    auto start = args[4];
 
-    /*
-    auto digraph = new Digraph!(string, long)();
-    digraph = digraph.loadFromNxJSON(filePath);
-    digraph.print();
+    string[] sources, sinks;
+    long[][string] vertexRestrictions;
+    long[string] productions;
+    auto network = new Network!(long)();
+    network = network.loadFromNxJSON(filePath, sources, sinks, vertexRestrictions, productions);
+    network.print();
+    writeln(sources);
+    writeln(sinks);
+    writeln(vertexRestrictions);
+    writeln(productions);
 
-    bool cycleFound;
-    long[string] shortestPaths;
-    string[string] previous;
+    network.saveToFile(id, sources, sinks, vertexRestrictions, productions);
 
     try{
-        if(algorithm == "dijkstra") {
-            auto tree = digraph.dijkstra(start, cycleFound, shortestPaths, previous);
-            if(cycleFound) {
-                tree.saveToFile(id, ["A negative cycle was found."]);
-            } else {
-                tree.saveToFile(id);
-            }
-        } else if(algorithm == "floyd") {
+        if(algorithm == "ford") {
+            writeln("To be implemented.");
+        } else if(algorithm == "mincycle") {
+            writeln("To be implemented.");
+        } else if(algorithm == "minpaths") {
+            writeln("To be implemented.");
+        } else if(algorithm == "simplex") {
             writeln("To be implemented.");
         }
     } catch(Exception e) {
@@ -37,5 +39,4 @@ void main(string[] args)
         outputFile.writeln("exception");
         outputFile.writeln(e.msg);
     }
-    */
 }
