@@ -222,40 +222,39 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         else:
-            info = 'Vertex {} is already on the graph.'.format(vertex_value)
+            info = 'Vertex {} is already on the digraph.'.format(vertex_value)
     elif btn_edge is not None and btn_pressed == 1 and source != "" and terminus != "" and weight is not None:
         if current_graph.has_node(source) and current_graph.has_node(terminus):
             current_graph.add_edge(source, terminus, weight=weight)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         elif not current_graph.has_node(source) and current_graph.has_node(terminus):
-            info = 'Vertex {} is not on the graph.'.format(source)
+            info = 'Vertex {} is not on the digraph.'.format(source)
         elif current_graph.has_node(source) and not current_graph.has_node(terminus):
-            info = 'Vertex {} is not on the graph.'.format(terminus)
+            info = 'Vertex {} is not on the digraph.'.format(terminus)
         else:
-            info = 'Vertices {} and {} are not on the graph.'.format(source, terminus)
+            info = 'Vertices {} and {} are not on the digraph.'.format(source, terminus)
     elif btn_rm_v is not None and btn_pressed == 2 and rm_vertex != "":
         if current_graph.has_node(rm_vertex):
             current_graph.remove_node(rm_vertex)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         else:
-            info = 'Vertex {} is not on the graph.'.format(rm_vertex)
+            info = 'Vertex {} is not on the digraph.'.format(rm_vertex)
     elif btn_rm_e is not None and btn_pressed == 3 and rm_source != "" and rm_terminus != "":
         if current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus) and current_graph.has_edge(rm_source, rm_terminus):
             current_graph.remove_edge(rm_source, rm_terminus)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         elif not current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus):
-            info = 'Vertex {} is not on the graph.'.format(rm_source)
+            info = 'Vertex {} is not on the digraph.'.format(rm_source)
         elif current_graph.has_node(rm_source) and not current_graph.has_node(rm_terminus):
-            info = 'Vertex {} is not on the graph.'.format(rm_terminus)
+            info = 'Vertex {} is not on the digraph.'.format(rm_terminus)
         elif not current_graph.has_node(rm_source) and not current_graph.has_node(rm_terminus):
-            info = 'Vertices {} and {} are not on the graph.'.format(rm_source, rm_terminus)
+            info = 'Vertices {} and {} are not on the digraph.'.format(rm_source, rm_terminus)
         else:
             info = "There isn't an edge between vertices {} and {}.".format(rm_source, rm_terminus)
     elif btn_run is not None and btn_pressed == 4:
-        print(start)
         if (algorithm == 'dijkstra' and start != '' and start != ' ' and start is not None) or algorithm == 'floyd':
             file_path = file.save_graph(current_graph, file_id)
             original_graph = current_graph
