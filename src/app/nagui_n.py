@@ -23,9 +23,38 @@ info = ''
 
 #--- End of global variables
 
-def update_vertices_info(graph, vertex = None)
+def update_vertices_info(graph, vertex = None):
     # If vertex is None, update every vertex.
-    pass
+    if vertex is None:
+        nodes = current_graph.nodes
+    else:
+        nodes = [vertex]
+
+    for v in nodes:
+        if current_graph.in_degree(v) == 0:
+            current_graph.nodes[v]['type'] = 'source'
+            if 'flow' in current_graph.nodes[v]:
+                current_graph.nodes[v]['info'] = '+ {}, {}'.format(v, current_graph.nodes[v]['flow'])
+            elif 'min_flow' in current_graph.nodes[v]:
+                current_graph.nodes[v]['info'] = '+ {}, {}/{}'.format(v, current_graph.nodes[v]['min_flow'], current_graph.nodes[v]['max_flow'])
+            else:
+                current_graph.nodes[v]['info'] = '+ {}'.format(v)
+        elif current_graph.out_degree(v) == 0:
+            current_graph.nodes[v]['type'] = 'sink'
+            if 'flow' in current_graph.nodes[v]:
+                current_graph.nodes[v]['info'] = '- {}, {}'.format(v, current_graph.nodes[v]['flow'])
+            elif 'min_flow' in current_graph.nodes[v]:
+                current_graph.nodes[v]['info'] = '- {}, {}/{}'.format(v, current_graph.nodes[v]['min_flow'], current_graph.nodes[v]['max_flow'])
+            else:
+                current_graph.nodes[v]['info'] = '- {}'.format(v)
+        else:
+            current_graph.nodes[v]['type'] = 'pass'
+            if 'flow' in current_graph.nodes[v]:
+                current_graph.nodes[v]['info'] = '{}, {}'.format(v, current_graph.nodes[v]['flow'])
+            elif 'min_flow' in current_graph.nodes[v]:
+                current_graph.nodes[v]['info'] = '{}, {}/{}'.format(v, current_graph.nodes[v]['min_flow'], current_graph.nodes[v]['max_flow'])
+            else:
+                current_graph.nodes[v]['info'] = '{}'.format(v)
 
 #--- GUI
 
@@ -251,41 +280,8 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
     elif btn_edge is not None and btn_pressed == 1 and source != "" and terminus != "" and weight is not None and restriction is not None and cost is not None:
         if current_graph.has_node(source) and current_graph.has_node(terminus) and weight >= restriction and restriction >= 0 and weight >= 0:
             current_graph.add_edge(source, terminus, weight=weight, restriction=restriction, flow=0, cost=cost, info='r:{}, f:{}, q:{}, c:{}'.format(restriction, 0, weight, cost))
-
-            if current_graph.in_degree(source) == 0:
-                current_graph.nodes[source]['type'] = 'source'
-                if 'flow' in current_graph.nodes[source]:
-                    current_graph.nodes[source]['info'] = '+ {}, {}'.format(source, current_graph.nodes[source]['flow'])
-                elif 'min_flow' in current_graph.nodes[source]:
-                    current_graph.nodes[source]['info'] = '+ {}, {}/{}'.format(source, current_graph.nodes[source]['min_flow'], current_graph.nodes[source]['max_flow'])
-                else:
-                    current_graph.nodes[source]['info'] = '+ {}'.format(source)
-            else:
-                current_graph.nodes[source]['type'] = 'pass'
-                if 'flow' in current_graph.nodes[source]:
-                    current_graph.nodes[source]['info'] = '{}, {}'.format(source, current_graph.nodes[source]['flow'])
-                elif 'min_flow' in current_graph.nodes[source]:
-                    current_graph.nodes[source]['info'] = '{}, {}/{}'.format(source, current_graph.nodes[source]['min_flow'], current_graph.nodes[source]['max_flow'])
-                else:
-                    current_graph.nodes[source]['info'] = '{}'.format(source)
-
-            if current_graph.out_degree(terminus) == 0:
-                current_graph.nodes[terminus]['type'] = 'sink'
-                if 'flow' in current_graph.nodes[terminus]:
-                    current_graph.nodes[terminus]['info'] = '- {}, {}'.format(terminus, current_graph.nodes[terminus]['flow'])
-                elif 'min_flow' in current_graph.nodes[terminus]:
-                    current_graph.nodes[terminus]['info'] = '- {}, {}/{}'.format(terminus, current_graph.nodes[terminus]['min_flow'], current_graph.nodes[terminus]['max_flow'])
-                else:
-                    current_graph.nodes[terminus]['info'] = '- {}'.format(terminus)
-            else:
-                current_graph.nodes[terminus]['type'] = 'pass'
-                if 'flow' in current_graph.nodes[terminus]:
-                    current_graph.nodes[terminus]['info'] = '{}, {}'.format(terminus, current_graph.nodes[terminus]['flow'])
-                elif 'min_flow' in current_graph.nodes[terminus]:
-                    current_graph.nodes[terminus]['info'] = '{}, {}/{}'.format(terminus, current_graph.nodes[terminus]['min_flow'], current_graph.nodes[terminus]['max_flow'])
-                else:
-                    current_graph.nodes[terminus]['info'] = '{}'.format(terminus)
-
+            update_vertices_info(current_graph, source)
+            update_vertices_info(current_graph, terminus)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         elif not current_graph.has_node(source) and current_graph.has_node(terminus):
@@ -303,33 +299,7 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
     elif btn_rm_v is not None and btn_pressed == 2 and rm_vertex != "":
         if current_graph.has_node(rm_vertex):
             current_graph.remove_node(rm_vertex)
-
-            for v in current_graph.nodes:
-                if current_graph.in_degree(v) == 0:
-                    current_graph.nodes[v]['type'] = 'source'
-                    if 'flow' in current_graph.nodes[v]:
-                        current_graph.nodes[v]['info'] = '+ {}, {}'.format(v, current_graph.nodes[v]['flow'])
-                    elif 'min_flow' in current_graph.nodes[v]:
-                        current_graph.nodes[v]['info'] = '+ {}, {}/{}'.format(v, current_graph.nodes[v]['min_flow'], current_graph.nodes[v]['max_flow'])
-                    else:
-                        current_graph.nodes[v]['info'] = '+ {}'.format(v)
-                elif current_graph.out_degree(v) == 0:
-                    current_graph.nodes[v]['type'] = 'sink'
-                    if 'flow' in current_graph.nodes[v]:
-                        current_graph.nodes[v]['info'] = '- {}, {}'.format(v, current_graph.nodes[v]['flow'])
-                    elif 'min_flow' in current_graph.nodes[v]:
-                        current_graph.nodes[v]['info'] = '- {}, {}/{}'.format(v, current_graph.nodes[v]['min_flow'], current_graph.nodes[v]['max_flow'])
-                    else:
-                        current_graph.nodes[v]['info'] = '- {}'.format(v)
-                else:
-                    current_graph.nodes[v]['type'] = 'pass'
-                    if 'flow' in current_graph.nodes[v]:
-                        current_graph.nodes[v]['info'] = '{}, {}'.format(v, current_graph.nodes[v]['flow'])
-                    elif 'min_flow' in current_graph.nodes[v]:
-                        current_graph.nodes[v]['info'] = '{}, {}/{}'.format(v, current_graph.nodes[v]['min_flow'], current_graph.nodes[v]['max_flow'])
-                    else:
-                        current_graph.nodes[v]['info'] = '{}'.format(v)
-
+            update_vertices_info(current_graph)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         else:
@@ -337,57 +307,8 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
     elif btn_rm_e is not None and btn_pressed == 3 and rm_source != "" and rm_terminus != "":
         if current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus) and current_graph.has_edge(rm_source, rm_terminus):
             current_graph.remove_edge(rm_source, rm_terminus)
-
-            if current_graph.in_degree(rm_source) == 0:
-                current_graph.nodes[rm_source]['type'] = 'source'
-                if 'flow' in current_graph.nodes[rm_source]:
-                    current_graph.nodes[rm_source]['info'] = '+ {}, {}'.format(rm_source, current_graph.nodes[rm_source]['flow'])
-                elif 'min_flow' in current_graph.nodes[rm_source]:
-                    current_graph.nodes[rm_source]['info'] = '+ {}, {}/{}'.format(rm_source, current_graph.nodes[rm_source]['min_flow'], current_graph.nodes[rm_source]['max_flow'])
-                else:
-                    current_graph.nodes[rm_source]['info'] = '+ {}'.format(rm_source)
-            elif current_graph.out_degree(rm_source) == 0:
-                current_graph.nodes[rm_source]['type'] = 'sink'
-                if 'flow' in current_graph.nodes[rm_source]:
-                    current_graph.nodes[rm_source]['info'] = '- {}, {}'.format(rm_source, current_graph.nodes[rm_source]['flow'])
-                elif 'min_flow' in current_graph.nodes[rm_source]:
-                    current_graph.nodes[rm_source]['info'] = '- {}, {}/{}'.format(rm_source, current_graph.nodes[rm_source]['min_flow'], current_graph.nodes[rm_source]['max_flow'])
-                else:
-                    current_graph.nodes[rm_source]['info'] = '- {}'.format(rm_source)
-            else:
-                current_graph.nodes[rm_source]['type'] = 'pass'
-                if 'flow' in current_graph.nodes[rm_source]:
-                    current_graph.nodes[rm_source]['info'] = '{}, {}'.format(rm_source, current_graph.nodes[rm_source]['flow'])
-                elif 'min_flow' in current_graph.nodes[rm_source]:
-                    current_graph.nodes[rm_source]['info'] = '{}, {}/{}'.format(rm_source, current_graph.nodes[rm_source]['min_flow'], current_graph.nodes[rm_source]['max_flow'])
-                else:
-                    current_graph.nodes[rm_source]['info'] = '{}'.format(rm_source)
-
-            if current_graph.in_degree(rm_terminus) == 0:
-                current_graph.nodes[rm_terminus]['type'] = 'source'
-                if 'flow' in current_graph.nodes[rm_terminus]:
-                    current_graph.nodes[rm_terminus]['info'] = '+ {}, {}'.format(rm_terminus, current_graph.nodes[rm_terminus]['flow'])
-                elif 'min_flow' in current_graph.nodes[rm_terminus]:
-                    current_graph.nodes[rm_terminus]['info'] = '+ {}, {}/{}'.format(rm_terminus, current_graph.nodes[rm_terminus]['min_flow'], current_graph.nodes[rm_terminus]['max_flow'])
-                else:
-                    current_graph.nodes[rm_terminus]['info'] = '+ {}'.format(rm_terminus)
-            elif current_graph.out_degree(rm_terminus) == 0:
-                current_graph.nodes[rm_terminus]['type'] = 'sink'
-                if 'flow' in current_graph.nodes[rm_terminus]:
-                    current_graph.nodes[rm_terminus]['info'] = '- {}, {}'.format(rm_terminus, current_graph.nodes[rm_terminus]['flow'])
-                elif 'min_flow' in current_graph.nodes[rm_terminus]:
-                    current_graph.nodes[rm_terminus]['info'] = '- {}, {}/{}'.format(rm_terminus, current_graph.nodes[rm_terminus]['min_flow'], current_graph.nodes[rm_terminus]['max_flow'])
-                else:
-                    current_graph.nodes[rm_terminus]['info'] = '- {}'.format(rm_terminus)
-            else:
-                current_graph.nodes[rm_terminus]['type'] = 'pass'
-                if 'flow' in current_graph.nodes[rm_terminus]:
-                    current_graph.nodes[rm_terminus]['info'] = '{}, {}'.format(rm_terminus, current_graph.nodes[rm_terminus]['flow'])
-                elif 'min_flow' in current_graph.nodes[rm_terminus]:
-                    current_graph.nodes[rm_terminus]['info'] = '{}, {}/{}'.format(rm_terminus, current_graph.nodes[rm_terminus]['min_flow'], current_graph.nodes[rm_terminus]['max_flow'])
-                else:
-                    current_graph.nodes[rm_terminus]['info'] = '{}'.format(rm_terminus)
-
+            update_vertices_info(current_graph, rm_source)
+            update_vertices_info(current_graph, rm_terminus)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         elif not current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus):
@@ -402,10 +323,10 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
         file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
         sbp.run(["../algo/network.out", file_path, str(file_id), algorithm])
-        result, is_a_graph, info = file.load_graph(file_id)
+        result, is_a_graph, info = file.load_network(file_id)
         if is_a_graph:
             current_graph = result
-            # update_vertices_info(current_graph)
+            update_vertices_info(current_graph)
             file_id += 1
         else:
             info = result

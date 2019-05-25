@@ -159,7 +159,7 @@ app.layout = html.Div(children=[
                         {
                             'selector': 'node',
                             'style': {
-                                'label': 'data(id)'
+                                'label': 'data(name)'
                             }
                         },
                         {
@@ -218,7 +218,7 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
 
     if btn_vertex is not None and btn_pressed == 0 and vertex_value != "":
         if not current_graph.has_node(vertex_value):
-            current_graph.add_node(vertex_value)
+            current_graph.add_node(vertex_value, name=vertex_value)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
         else:
@@ -258,8 +258,11 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
         if (algorithm == 'dijkstra' and start != '' and start != ' ' and start is not None) or algorithm == 'floyd':
             file_path = file.save_graph(current_graph, file_id)
             original_graph = current_graph
-            sbp.run(["../algo/digraph.out", file_path, str(file_id), algorithm, start])
-            result, is_a_graph, info = file.load_graph(file_id)
+            if algorithm == 'dijkstra':
+                sbp.run(["../algo/digraph.out", file_path, str(file_id), algorithm, start])
+            else:
+                sbp.run(["../algo/digraph.out", file_path, str(file_id), algorithm, '0'])
+            result, is_a_graph, info = file.load_digraph(file_id)
             if is_a_graph:
                 current_graph = result
                 file_id += 1

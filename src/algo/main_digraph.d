@@ -27,7 +27,9 @@ void main(string[] args)
                 tree.saveToFile(id);
             }
         } else if(algorithm == "floyd") {
-            writeln("To be implemented.");
+            auto dict = digraph.floyd();
+            auto trees = digraph.getTreesFromDict(dict);
+            digraph.saveFloydToFile(id, trees);
         }
     } catch(Exception e) {
         string outPath = format("../../data/%s-final.txt", id);

@@ -685,7 +685,8 @@ class Network(EType) {
             network.print();
         }
         network.findInitialFlow(targetFlow, verbose);
-        network = network.fordFulkerson("a'", "z'", verbose, targetFlow);
+        network = network.fordFulkerson("a'", "z'", true, targetFlow);
+        network = network.revertTransformations(vertexRestrictions);
         if(verbose) {
             writeln("The optimization process has finished.");
         }
@@ -1045,7 +1046,7 @@ class Network(EType) {
      *      - Any vertex has an invalid restriction
      *      - Flow F is not possible in the network
      */
-    public auto minimumCostFlowWithShortestPaths(EType F, ref bool solutionFound, string[] sources, string[] sinks, EType[string] vertexRestrictions = null, bool verbose = true)
+    public auto minimumCostFlowWithShortestPaths(EType F, ref bool solutionFound, string[] sources, string[] sinks, EType[][string] vertexRestrictions = null, bool verbose = true)
     {
         import std.exception: enforce;
         import std.stdio: writeln;
@@ -1060,13 +1061,14 @@ class Network(EType) {
         auto network = copy();
         network.setTrivialFlow();
 
-        EType[][string] restrictions;
-        if(vertexRestrictions !is null) {
-            foreach(v; vertexRestrictions.byKey) {
-                restrictions[v] = [vertexRestrictions[v], 0];
-            }
-        }
-        network = network.makeTransformations(sources, sinks, restrictions);
+        // EType[][string] restrictions;
+        // if(vertexRestrictions !is null) {
+        //     foreach(v; vertexRestrictions.byKey) {
+        //         restrictions[v] = [vertexRestrictions[v], 0];
+        //     }
+        // }
+        // network = network.makeTransformations(sources, sinks, restrictions);
+        network = network.makeTransformations(sources, sinks, vertexRestrictions);
         network.print();
 
         // Optimizing the routing.
@@ -1091,7 +1093,8 @@ class Network(EType) {
 
             if(cycleFound || (shortest["z'"] == EType.max && network.currentFlow != F)) {
                 solutionFound = false;
-                network = network.revertTransformations(restrictions);
+                // network = network.revertTransformations(restrictions);
+                network = network.revertTransformations(vertexRestrictions);
                 return network;
             }
 
@@ -1134,7 +1137,8 @@ class Network(EType) {
             }
         }
 
-        network = network.revertTransformations(restrictions);
+        // network = network.revertTransformations(restrictions);
+        network = network.revertTransformations(vertexRestrictions);
 
         return network;
     }
