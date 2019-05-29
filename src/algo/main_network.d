@@ -6,7 +6,7 @@ import datastruct.directed.network;
 void main(string[] args)
 {
     import std.conv: parse;
-    
+
     auto filePath = args[1];
     auto id = args[2];
     auto algorithm = args[3];
@@ -38,7 +38,9 @@ void main(string[] args)
             auto info = [format("Flow: %s. Cost: %s.", network.flow, network.cost)];
             network.saveToFile(id, sources, sinks, vertexRestrictions, productions, info);
         } else if(algorithm == "simplex") {
-            writeln("To be implemented.");
+            auto productionsCopy = productions.dup;
+            network = network.simplex(productionsCopy);
+            network.saveToFile(id, sources, sinks, vertexRestrictions, productions);
         }
     } catch(Exception e) {
         string outPath = format("../../data/%s-final.txt", id);

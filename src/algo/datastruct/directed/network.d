@@ -3,7 +3,7 @@
  * the algorithms that were seen in the course.
  *
  * Author: Ivan A. Moreno Soto
- * Date: May 3, 2019
+ * Date: May 28, 2019
  */
 module datastruct.directed.network;
 
@@ -1139,6 +1139,242 @@ class Network(EType) {
 
         // network = network.revertTransformations(restrictions);
         network = network.revertTransformations(vertexRestrictions);
+
+        return network;
+    }
+
+    /**
+     * Optimizes (using the simplex algorithm) a network with productions and
+     * demands. Finds cost-reducing cycles to reroute flow inside the network.
+     *
+     * Params:
+     *      solution = AA that indicates what arcs are part of the expansion tree solution
+     */
+    private void optimize(ref bool[string][string] solution)
+    {
+        import std.stdio: writeln;
+        import std.string: format;
+        import std.container: SList;
+        import std.algorithm.comparison: min;
+
+        bool bestFound = false;
+        // Stacks to store previous states.
+        auto stack = SList!string();
+        auto prevMin = SList!EType();
+        auto prevSavings = SList!EType();
+
+        while(!bestFound) {
+            string bestSource, bestTerminus;
+            EType maxSaving = 0, delta;
+            string[][] cycle, tempCycle;
+
+            foreach(vertex; vertices.byKey) {
+                foreach(ref arc; vertices[vertex].outArcs.byValue) {
+                    if(!solution[arc.source][arc.terminus] && arc.flow < arc.capacity) {
+                        stack.clear();
+                        prevMin.clear();
+                        prevSavings.clear();
+                        destroy(tempCycle);
+
+                        tempCycle ~= [arc.source, arc.terminus, "up"];
+                        EType cycleMinimum = arc.capacity - arc.flow, savings = -arc.cost;
+                        string next = arc.terminus;
+
+                        bool[string] touched;
+                        foreach(v; vertices.byKey) {
+                            touched[v] = false;
+                        }
+                        touched[arc.terminus] = true;
+
+                        stack.insert(arc.source);
+                        prevMin.insert(cycleMinimum);
+                        prevSavings.insert(savings);
+
+                        while(next != arc.source) {
+                            bool found = false;
+
+                            foreach(a; vertices[next].outArcs.byValue) {
+                                if(solution[a.source][a.terminus] && !touched[a.terminus]) {
+                                    prevMin.insert(cycleMinimum);
+                                    prevSavings.insert(savings);
+                                    stack.insert(a.source);
+
+                                    cycleMinimum = min(cycleMinimum, a.capacity - a.flow);
+                                    savings += -a.cost;
+                                    tempCycle ~= [a.source, a.terminus, "up"];
+                                    next = a.terminus;
+                                    touched[a.terminus] = true;
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if(found) {
+                                continue;
+                            }
+
+                            foreach(a; vertices[next].inArcs.byValue) {
+                                if(solution[a.source][a.terminus] && !touched[a.source]) {
+                                    prevMin.insert(cycleMinimum);
+                                    prevSavings.insert(savings);
+                                    stack.insert(a.terminus);
+
+                                    cycleMinimum = min(cycleMinimum, a.flow - a.restriction);
+                                    savings += a.cost;
+                                    tempCycle ~= [a.source, a.terminus, "down"];
+                                    next = a.source;
+                                    touched[a.source] = true;
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if(!found) {
+                                // Revert cycleMinimum.
+                                cycleMinimum = prevMin.front();
+                                prevMin.removeFront();
+                                // Revert savings.
+                                savings = prevSavings.front();
+                                prevSavings.removeFront();
+                                // Revert cycle.
+                                tempCycle = tempCycle[0..$-1];
+                                next = stack.front();
+                                stack.removeFront();
+                            }
+                        }
+
+                        if(savings > maxSaving) {
+                            bestSource = arc.source;
+                            bestTerminus = arc.terminus;
+                            maxSaving = savings;
+                            delta = cycleMinimum;
+                            cycle = tempCycle.dup;
+                        }
+                    }
+                }
+            }
+
+            if(maxSaving == 0) {
+                bestFound = true;
+                continue;
+            }
+
+            writeln("cycle found");
+            writeln(format("delta: %s", delta));
+            writeln(format("savings: %s", maxSaving));
+            writeln(format("cycle: %s", cycle));
+            writeln("");
+
+            // Adjusting the arcs in the cycle.
+            bool emptied = false;
+            foreach(arc; cycle) {
+                if(arc[2] == "up") {
+                    vertices[arc[0]].outArcs[arc[1]].flow += delta;
+                    vertices[arc[1]].inArcs[arc[0]].flow += delta;
+                } else {
+                    vertices[arc[0]].outArcs[arc[1]].flow -= delta;
+                    vertices[arc[1]].inArcs[arc[0]].flow -= delta;
+
+                    if(vertices[arc[0]].outArcs[arc[1]].flow == vertices[arc[0]].outArcs[arc[1]].restriction) {
+                        solution[arc[0]][arc[1]] = false;
+                        solution[bestSource][bestTerminus] = true;
+                        emptied = true;
+                    }
+                }
+            }
+
+            if(!emptied) {
+                foreach(arc; cycle) {
+                    if(arc[2] == "up") {
+                        if(vertices[arc[0]].outArcs[arc[1]].flow == vertices[arc[0]].outArcs[arc[1]].capacity) {
+                            solution[arc[0]][arc[1]] = false;
+                            solution[bestSource][bestTerminus] = true;
+                        }
+                    }
+                }
+            }
+
+            print();
+            writeln(solution);
+            writeln("end cycle found");
+            writeln("");
+        }
+    }
+
+    /**
+     * Uses the simplex method for networks to find the optimal routing with
+     * demands and productions.
+     *
+     * Params:
+     *      productions = AA with the production or demand for every vertex.
+     * Returns: Network with optimal routing.
+     */
+    public auto simplex(EType[string] productions)
+    {
+        import std.stdio: writeln;
+        import std.math: abs;
+        import std.exception: enforce;
+
+        auto network = copy();
+
+        // Computing the penalization.
+        bool[string][string] solution;
+        EType M = 0;
+        foreach(vertex; vertices.byValue) {
+            foreach(arc; vertex.outArcs.byValue) {
+                M += abs(arc.cost);
+                solution[arc.source][arc.terminus] = false;
+            }
+        }
+
+        // Making the fictional vertex and arcs.
+        network.addVertex("a'");
+        EType[string] detour;
+        foreach(vertex; vertices.byKey) {
+            detour[vertex] = 0;
+        }
+
+        foreach(vertex; vertices.byKey) {
+            foreach(ref arc; network.vertices[vertex].outArcs.byValue) {
+                if(arc.restriction > 0) {
+                    detour[vertex] += arc.restriction;
+                    arc.flow += arc.restriction;
+                    network.vertices[arc.terminus].inArcs[arc.source].flow += arc.restriction;
+                    productions[arc.terminus] += arc.restriction;
+                    productions[arc.source] -= arc.restriction;
+                }
+            }
+        }
+
+        writeln(productions);
+
+        foreach(vertex; productions.byKey) {
+            writeln(vertex);
+            if(productions[vertex] > 0) {
+                network.addArc(vertex, "a'", EType.max, 0, productions[vertex], M);
+                solution[vertex]["a'"] = true;
+            } else if(productions[vertex] < 0) {
+                network.addArc("a'", vertex, EType.max, 0, -productions[vertex], M);
+                solution["a'"][vertex] = true;
+            }
+            network.print();
+        }
+
+        // Finding initial solution.
+        network.optimize(solution);
+
+        // The problem has a solution if every arc that touches a' is empty.
+        foreach(arc; network.vertices["a'"].outArcs.byValue) {
+            enforce(arc.flow == 0, "The problem doesn't have a solution.");
+        }
+        foreach(arc; network.vertices["a'"].inArcs.byValue) {
+            enforce(arc.flow == 0, "The problem doesn't have a solution.");
+        }
+
+        // Optimizing the actual problem.
+        network.removeVertex("a'");
+        network.optimize(solution);
+        network.currentCost = network.computeCost();
 
         return network;
     }

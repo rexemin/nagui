@@ -166,6 +166,14 @@ app.layout = html.Div(children=[
                     dbc.Col([
                         dbc.Row([
                             dbc.Col([
+                                html.H5('Target flow: ')
+                            ], width=4),
+                            dbc.Col([
+                                dbc.Input(id='target-flow', type='number', className='mx-1 my-2')
+                            ], width=6)
+                        ], align='center'),
+                        dbc.Row([
+                            dbc.Col([
                                 dcc.Dropdown(
                                     id='drop-algo-graph',
                                     options=[
@@ -244,11 +252,12 @@ Updating the graph every time a vertex or an edge are added/removed.
      State(component_id='rm-source-graph', component_property='value'),
      State(component_id='rm-terminus-graph', component_property='value'),
      State(component_id='weight-graph', component_property='value'),
+     State(component_id='target-flow', component_property='value'),
      State('drop-algo-graph', 'value'),
      State('graph', 'elements')]
 )
 def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, btn_empty, vertex_value, source, terminus,
-    restriction, cost, rm_vertex, rm_source, rm_terminus, weight, algorithm, elements):
+    restriction, cost, rm_vertex, rm_source, rm_terminus, weight, target_flow, algorithm, elements):
     global current_graph
     global file_id
     global original_graph
@@ -320,18 +329,23 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
         else:
             info = "There isn't an edge between vertices {} and {}.".format(rm_source, rm_terminus)
     elif btn_run is not None and btn_pressed == 4:
-        file_path = file.save_graph(current_graph, file_id)
-        original_graph = current_graph
-        sbp.run(["../algo/network.out", file_path, str(file_id), algorithm])
-        result, is_a_graph, info = file.load_network(file_id)
-        if is_a_graph:
-            current_graph = result
-            update_vertices_info(current_graph)
-            file_id += 1
-        else:
-            info = result
-        elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
-        elements = elements['elements']['nodes'] + elements['elements']['edges']
+        if ((algorithm == 'mincycle' or algorithm == 'minpaths') and target_flow != '' and target_flow != ' ' and target_flow is not None) or algorithm == 'ford' or algorithm == 'simplex':
+            file_path = file.save_graph(current_graph, file_id)
+            original_graph = current_graph
+            if algorithm == 'ford' or algorithm == 'simplex':
+                sbp.run(["../algo/network.out", file_path, str(file_id), algorithm, '0'])
+            else:
+                sbp.run(["../algo/network.out", file_path, str(file_id), algorithm, str(target_flow)])
+
+            result, is_a_graph, info = file.load_network(file_id)
+            if is_a_graph:
+                current_graph = result
+                update_vertices_info(current_graph)
+                file_id += 1
+            else:
+                info = result
+            elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
+            elements = elements['elements']['nodes'] + elements['elements']['edges']
     elif btn_reset is not None and btn_pressed == 5:
         current_graph = original_graph
         elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
