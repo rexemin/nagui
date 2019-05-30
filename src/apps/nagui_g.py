@@ -6,11 +6,13 @@ import dash_cytoscape as cyto
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
+from nagui import app
+
 import numpy as np
 import networkx as nx
 
 # draw and file for the wacky stuff with D.
-import file
+import apps.file as file
 import subprocess as sbp
 
 #--- Global variables
@@ -25,11 +27,21 @@ info = ''
 
 #--- GUI
 
-external_stylesheets = [dbc.themes.BOOTSTRAP] #['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+# external_stylesheets = [dbc.themes.BOOTSTRAP] #['https://codepen.io/chriddyp/pen/bWLwgP.css']
+# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-app.layout = html.Div(children=[
-    html.H1('Graphs', className='m-4', id='header-graph'),
+#app.
+layout = html.Div([
+    dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                html.H1('Graphs', className='m-4', id='header-graph'),
+            ], width=3),
+            dbc.Col([
+                dcc.Link('Go back', href='/', className='btn btn-primary m-2'),
+            ], width=2)
+        ], justify='around', align='center')
+    ]),
 
     dbc.Container([
         dbc.Row([
@@ -111,7 +123,7 @@ app.layout = html.Div(children=[
             dbc.Col([
                 dbc.Row([
                     dbc.Col([
-                        html.H4('The graph has 0 vertice(s) and 0 edge(s).', id='info-graph', className='mx-3'),
+                        html.H4('The graph has 0 node(s) and 0 edge(s).', id='info-graph', className='mx-3'),
                     ], width=4),
                     dbc.Col([
                         html.H3('', id='additional-info-graph', className='mx-3')
@@ -211,26 +223,44 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
             current_graph.add_node(vertex_value)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        else:
+            info = 'Vertex {} is already on the graph.'.format(vertex_value)
     elif btn_edge is not None and btn_pressed == 1 and source != "" and terminus != "" and weight is not None:
         if current_graph.has_node(source) and current_graph.has_node(terminus):
             current_graph.add_edge(source, terminus, weight=weight)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        elif not current_graph.has_node(source) and current_graph.has_node(terminus):
+            info = 'Vertex {} is not on the graph.'.format(source)
+        elif current_graph.has_node(source) and not current_graph.has_node(terminus):
+            info = 'Vertex {} is not on the graph.'.format(terminus)
+        else:
+            info = 'Vertices {} and {} are not on the graph.'.format(source, terminus)
     elif btn_rm_v is not None and btn_pressed == 2 and rm_vertex != "":
         if current_graph.has_node(rm_vertex):
             current_graph.remove_node(rm_vertex)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        else:
+            info = 'Vertex {} is not on the graph.'.format(rm_vertex)
     elif btn_rm_e is not None and btn_pressed == 3 and rm_source != "" and rm_terminus != "":
         if current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus) and current_graph.has_edge(rm_source, rm_terminus):
             current_graph.remove_edge(rm_source, rm_terminus)
             elements = nx.readwrite.json_graph.cytoscape_data(current_graph)
             elements = elements['elements']['nodes'] + elements['elements']['edges']
+        elif not current_graph.has_node(rm_source) and current_graph.has_node(rm_terminus):
+            info = 'Vertex {} is not on the graph.'.format(rm_source)
+        elif current_graph.has_node(rm_source) and not current_graph.has_node(rm_terminus):
+            info = 'Vertex {} is not on the graph.'.format(rm_terminus)
+        elif not current_graph.has_node(rm_source) and not current_graph.has_node(rm_terminus):
+            info = 'Vertices {} and {} are not on the graph.'.format(rm_source, rm_terminus)
+        else:
+            info = "There isn't an edge between vertices {} and {}.".format(rm_source, rm_terminus)
     elif btn_run is not None and btn_pressed == 4:
         file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
-        sbp.run(["../algo/graph.out", file_path, str(file_id), algorithm])
-        result, is_a_graph = file.load_graph(file_id)
+        sbp.run(["./algo/graph.out", file_path, str(file_id), algorithm])
+        result, is_a_graph, info = file.load_graph(file_id)
         if is_a_graph:
             current_graph = result
             file_id += 1
@@ -297,6 +327,7 @@ def update_graph_stylesheet(graph):
             {
                 'selector': 'edge',
                 'style': {
+                    'label': 'data(weight)',
                     'curve-style': 'bezier',
                     'target-arrow-shape': 'vee'
                 }
@@ -312,7 +343,7 @@ is changed.
     [Input(component_id='graph', component_property='elements')]
 )
 def update_graph_info(graph):
-    return "The graph has {} vertice(s) and {} edge(s)".format(current_graph.number_of_nodes(), current_graph.number_of_edges())
+    return "The graph has {} node(s) and {} edge(s)".format(current_graph.number_of_nodes(), current_graph.number_of_edges())
 
 """
 Input/Output of the current graph to/from text files.
@@ -366,7 +397,7 @@ def reset_terminus_input(n_clicks):
     [Input(component_id='btn-edge-graph', component_property='n_clicks')]
 )
 def reset_weight_input(n_clicks):
-    return 0
+    return 1
 
 @app.callback(
     Output(component_id='rm-vertex-graph', component_property='value'),

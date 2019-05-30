@@ -403,6 +403,36 @@ class Digraph(VType, EType) {
     }
 
     /**
+     * Takes a Networkx JSON file and creates a Digraph from it.
+     *
+     * Params:
+     *      filePath = Path to the JSON file
+     *
+     * Returns: Digraph instance with the information contained in filePath.
+     */
+    public auto loadFromNxJSON(string filePath)
+    {
+        import std.json;
+        import std.stdio: File;
+
+        // Reading and parsing the input graph.
+        auto outputFile = File(filePath, "r");
+        auto fileContents = outputFile.readln();
+        JSONValue jsonGraph = parseJSON(fileContents);
+
+        // Creating the new graph from the JSON.
+        auto graph = new Digraph!(VType, EType)();
+        foreach(vertex; jsonGraph["nodes"].array) {
+            graph.addVertex(vertex["id"].str);
+        }
+        foreach(edge; jsonGraph["links"].array) {
+            graph.addArc(edge["source"].str, edge["target"].str, edge["weight"].integer);
+        }
+
+        return graph;
+    }
+
+    /**
      * Saves the digraph in a text file with a format useful
      * for Networkx (in Python).
      * Text file format:
@@ -416,20 +446,21 @@ class Digraph(VType, EType) {
      *
      * Params:
      *      id = ID for the text file
+     *      additionalInfo = Additional information accompanying the digraph
      */
-    public void saveToFile(string id)
+    public void saveToFile(string id, string[] additionalInfo = null)
     {
         import std.stdio: File;
         import std.string: format;
 
-        string filePath = format("../../data/%s-final.txt", id);
+        string filePath = format("./../data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("digraph");
         // Vertices.
         outputFile.writeln("vertex");
         foreach(vertex; vertices.byKey) {
-            outputFile.writeln(vertex);
+            outputFile.writeln(format("%s %s", vertex, vertex));
         }
         // Arcs.
         outputFile.writeln("edges");
@@ -438,6 +469,65 @@ class Digraph(VType, EType) {
                 outputFile.writeln(format("%s %s %s", arc.source, arc.terminus, arc.weight));
             }
         }
+
+        if(additionalInfo !is null) {
+            outputFile.writeln("extra");
+            foreach(extra; additionalInfo) {
+                outputFile.writeln(extra);
+            }
+        }
+        outputFile.writeln("end");
+    }
+
+    /**
+     * Saves many digraphs in a text file with a format useful
+     * for Networkx (in Python).
+     * Text file format:
+     *      digraph header -> digraph
+     *      vertices header -> vertex
+     *      vertices -> name of every vertex in the digraph
+     *      arcs header -> edges
+     *      arcs -> source terminus weight
+     *      footer -> end
+     *
+     * Params:
+     *      id = ID for the text file
+     *      trees = Array of digraphs to be saved
+     */
+    public void saveFloydToFile(string id, Digraph!(VType, EType)[] trees)
+    {
+        import std.stdio: File;
+        import std.string: format;
+
+        string filePath = format("./../data/%s-final.txt", id);
+        auto outputFile = File(filePath, "w");
+        // Header.
+        outputFile.writeln("digraph");
+
+        // Vertices.
+        string subfix = "";
+        outputFile.writeln("vertex");
+        foreach(digraph; trees) {
+            foreach(vertex; digraph.vertices.byKey) {
+                outputFile.writeln(format("%s%s %s", vertex, subfix, vertex));
+            }
+
+            subfix = format("%s'", subfix);
+        }
+
+        // Arcs.
+        subfix = "";
+        outputFile.writeln("edges");
+        foreach(digraph; trees) {
+            foreach(vertex; digraph.vertices.byKey) {
+                foreach(arc; digraph.vertices[vertex].outArcs) {
+                    outputFile.writeln(format("%s%s %s%s %s", arc.source, subfix, arc.terminus, subfix, arc.weight));
+                }
+            }
+
+            subfix = format("%s'", subfix);
+        }
+
         outputFile.writeln("end");
     }
 
@@ -771,5 +861,39 @@ class Digraph(VType, EType) {
         }
 
         return routes;
+    }
+
+    /**
+     * Takes a FloydDict and returns an array with all the shortest path trees
+     * in it.
+     *
+     * Params:
+     *      dict = FloydDict from floyd
+     *
+     * Returns: Array of Digraph instances.
+     */
+    public auto getTreesFromDict(FloydDict!(VType, EType) dict)
+    {
+        Digraph!(VType, EType)[] trees;
+        int currentTree = 0;
+
+        foreach(v; vertices.byKey) {
+            trees ~= new Digraph!(VType, EType)();
+            trees[currentTree].addVertex(v);
+
+            foreach(u; vertices.byKey) {
+                if(v != u && dict.routes[v][u].dist != EType.max) {
+                    trees[currentTree].addVertex(dict.routes[v][u].previous);
+                    trees[currentTree].addVertex(u);
+
+                    auto arc = searchArcOut(dict.routes[v][u].previous, u);
+                    trees[currentTree].addArc(arc.source, arc.terminus, arc.weight);
+                }
+            }
+
+            currentTree++;
+        }
+
+        return trees;
     }
 }

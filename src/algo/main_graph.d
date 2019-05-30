@@ -30,13 +30,15 @@ void main(string[] args)
             tree.saveToFile(id);
         } else if(algorithm == "kruskal") {
             auto tree = graph.kruskal(hasTree, treeWeight);
-            tree.saveToFile(id);
+            auto info = format("The minimum tree has weight: %s", treeWeight);
+            tree.saveToFile(id, [info]);
         } else if(algorithm == "prim") {
             auto tree = graph.prim(hasTree, treeWeight);
-            tree.saveToFile(id);
+            auto info = format("The minimum tree has weight: %s", treeWeight);
+            tree.saveToFile(id, [info]);
         }
     } catch(Exception e) {
-        string outPath = format("../../data/%s-final.txt", id);
+        string outPath = format("./../data/%s-final.txt", id);
         auto outputFile = File(outPath, "w");
         // Header.
         outputFile.writeln("exception");
