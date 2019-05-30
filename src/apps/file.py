@@ -3,12 +3,12 @@ import networkx as nx
 
 def save_graph(graph, file_id):
     graph_data = nx.node_link_data(graph)
-    with open("../../data/{}.json".format(file_id), 'w') as outfile:
+    with open("../data/{}.json".format(file_id), 'w') as outfile:
         json.dump(graph_data, outfile)
-    return "../../data/{}.json".format(file_id)
+    return "../data/{}.json".format(file_id)
 
 def load_graph(file_id):
-    with open("../../data/{}-final.txt".format(file_id), 'r') as f:
+    with open("../data/{}-final.txt".format(file_id), 'r') as f:
         isGraph = True
         header = f.readline().split()[0]
         graph = nx.Graph()
@@ -40,7 +40,7 @@ def load_graph(file_id):
     return graph, isGraph, info
 
 def load_digraph(file_id):
-    with open("../../data/{}-final.txt".format(file_id), 'r') as f:
+    with open("../data/{}-final.txt".format(file_id), 'r') as f:
         isGraph = True
         header = f.readline().split()[0]
         graph = nx.DiGraph()
@@ -68,7 +68,7 @@ def load_digraph(file_id):
     return graph, isGraph, info
 
 def load_network(file_id):
-    with open("../../data/{}-final.txt".format(file_id), 'r') as f:
+    with open("../data/{}-final.txt".format(file_id), 'r') as f:
         isGraph = True
         header = f.readline().split()[0]
         graph = nx.DiGraph()

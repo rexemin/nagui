@@ -40,10 +40,11 @@ void main(string[] args)
         } else if(algorithm == "simplex") {
             auto productionsCopy = productions.dup;
             network = network.simplex(productionsCopy);
-            network.saveToFile(id, sources, sinks, vertexRestrictions, productions);
+            auto info = [format("Cost: %s.", network.cost)];
+            network.saveToFile(id, sources, sinks, vertexRestrictions, productions, info);
         }
     } catch(Exception e) {
-        string outPath = format("../../data/%s-final.txt", id);
+        string outPath = format("./../data/%s-final.txt", id);
         auto outputFile = File(outPath, "w");
         // Header.
         outputFile.writeln("exception");

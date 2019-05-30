@@ -321,7 +321,7 @@ class Network(EType) {
         import std.string: format;
         import std.algorithm.searching: canFind;
 
-        string filePath = format("../../data/%s-final.txt", id);
+        string filePath = format("./../data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("network");
@@ -668,7 +668,7 @@ class Network(EType) {
      *      - Any vertex has an invalid restriction
      *      - An initial flow wasn't found (if there are arc restrictions)
      */
-    auto fordFulkerson(string[] sources, string[] sinks, EType[][string] vertexRestrictions = null, bool verbose = true, EType* targetFlow = null)
+    public auto fordFulkerson(string[] sources, string[] sinks, EType[][string] vertexRestrictions = null, bool verbose = true, EType* targetFlow = null)
     {
         import std.algorithm.comparison: min;
         import std.exception: enforce;
@@ -690,6 +690,8 @@ class Network(EType) {
         if(verbose) {
             writeln("The optimization process has finished.");
         }
+
+        network.currentCost = network.computeCost;
 
         return network;
     }

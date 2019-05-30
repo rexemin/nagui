@@ -6,11 +6,13 @@ import dash_cytoscape as cyto
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
+from nagui import app
+
 import numpy as np
 import networkx as nx
 
 # draw and file for the wacky stuff with D.
-import file
+import apps.file as file
 import subprocess as sbp
 
 #--- Global variables
@@ -25,11 +27,21 @@ info = ''
 
 #--- GUI
 
-external_stylesheets = [dbc.themes.BOOTSTRAP] #['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+# external_stylesheets = [dbc.themes.BOOTSTRAP] #['https://codepen.io/chriddyp/pen/bWLwgP.css']
+# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-app.layout = html.Div(children=[
-    html.H1('Graphs', className='m-4', id='header-graph'),
+#app.
+layout = html.Div([
+    dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                html.H1('Graphs', className='m-4', id='header-graph'),
+            ], width=3),
+            dbc.Col([
+                dcc.Link('Go back', href='/', className='btn btn-primary m-2'),
+            ], width=2)
+        ], justify='around', align='center')
+    ]),
 
     dbc.Container([
         dbc.Row([
@@ -247,7 +259,7 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
     elif btn_run is not None and btn_pressed == 4:
         file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
-        sbp.run(["../algo/graph.out", file_path, str(file_id), algorithm])
+        sbp.run(["./algo/graph.out", file_path, str(file_id), algorithm])
         result, is_a_graph, info = file.load_graph(file_id)
         if is_a_graph:
             current_graph = result

@@ -32,7 +32,7 @@ void main(string[] args)
             digraph.saveFloydToFile(id, trees);
         }
     } catch(Exception e) {
-        string outPath = format("../../data/%s-final.txt", id);
+        string outPath = format("./../data/%s-final.txt", id);
         auto outputFile = File(outPath, "w");
         // Header.
         outputFile.writeln("exception");
