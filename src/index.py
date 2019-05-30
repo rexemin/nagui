@@ -32,10 +32,13 @@ main_menu = html.Div([
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/graphs':
+        nagui_g.current_graph.clear()
         return nagui_g.layout
     elif pathname == '/digraphs':
+        nagui_d.current_digraph.clear()
         return nagui_d.layout
     elif pathname == '/networks':
+        nagui_n.current_network.clear()
         return nagui_n.layout
     elif pathname == '/':
         return main_menu
