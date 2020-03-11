@@ -12,7 +12,7 @@ import numpy as np
 import networkx as nx
 
 # draw and file for the wacky stuff with D.
-import apps.file as file
+import subapps.file as file
 import subprocess as sbp
 
 #--- Global variables
@@ -259,7 +259,7 @@ def update_graph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset, b
     elif btn_run is not None and btn_pressed == 4:
         file_path = file.save_graph(current_graph, file_id)
         original_graph = current_graph
-        sbp.run(["./algo/graph.out", file_path, str(file_id), algorithm])
+        sbp.run(["./lib/bin/graph.out", file_path, str(file_id), algorithm])
         result, is_a_graph, info = file.load_graph(file_id)
         if is_a_graph:
             current_graph = result

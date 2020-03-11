@@ -12,7 +12,7 @@ import numpy as np
 import networkx as nx
 
 # draw and file for the wacky stuff with D.
-import apps.file as file
+import subapps.file as file
 import subprocess as sbp
 
 #--- Global variables
@@ -345,9 +345,9 @@ def update_network(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset,
             file_path = file.save_graph(current_network, file_id)
             original_network = current_network
             if algorithm == 'ford' or algorithm == 'simplex':
-                sbp.run(["./algo/network.out", file_path, str(file_id), algorithm, '0'])
+                sbp.run(["./lib/bin/network.out", file_path, str(file_id), algorithm, '0'])
             else:
-                sbp.run(["./algo/network.out", file_path, str(file_id), algorithm, str(target_flow)])
+                sbp.run(["./lib/bin/network.out", file_path, str(file_id), algorithm, str(target_flow)])
 
             result, is_a_graph, info = file.load_network(file_id)
             if is_a_graph:

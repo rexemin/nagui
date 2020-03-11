@@ -12,7 +12,7 @@ import numpy as np
 import networkx as nx
 
 # draw and file for the wacky stuff with D.
-import apps.file as file
+import subapps.file as file
 import subprocess as sbp
 
 #--- Global variables
@@ -271,9 +271,9 @@ def update_digraph(btn_vertex, btn_edge, btn_rm_v, btn_rm_e, btn_run, btn_reset,
             file_path = file.save_graph(current_digraph, file_id)
             original_digraph = current_digraph
             if algorithm == 'dijkstra':
-                sbp.run(["./algo/digraph.out", file_path, str(file_id), algorithm, start])
+                sbp.run(["./lib/bin/digraph.out", file_path, str(file_id), algorithm, start])
             else:
-                sbp.run(["./algo/digraph.out", file_path, str(file_id), algorithm, '0'])
+                sbp.run(["./lib/bin/digraph.out", file_path, str(file_id), algorithm, '0'])
             result, is_a_graph, info = file.load_digraph(file_id)
             if is_a_graph:
                 current_digraph = result

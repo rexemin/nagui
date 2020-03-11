@@ -13,32 +13,31 @@ void main(string[] args)
 
     auto graph = new Graph!(string, long)();
     graph = graph.loadFromNxJSON(filePath);
-    graph.print();
+    string outPath = format("./data/%s-final.txt", id);
 
     try{
         if(algorithm == "fleury") {
             auto circuit = graph.fleury(isConnected);
-            circuit.saveToFile(id);
+            circuit.saveToFile(outPath);
         } else if(algorithm == "bfs") {
             auto tree = graph.bfs(isConnected);
-            tree.saveToFile(id);
+            tree.saveToFile(outPath);
         } else if(algorithm == "idfs") {
             auto tree = graph.idfs(isConnected);
-            tree.saveToFile(id);
+            tree.saveToFile(outPath);
         } else if(algorithm == "rdfs") {
             auto tree = graph.rdfs(isConnected);
-            tree.saveToFile(id);
+            tree.saveToFile(outPath);
         } else if(algorithm == "kruskal") {
             auto tree = graph.kruskal(hasTree, treeWeight);
             auto info = format("The minimum tree has weight: %s", treeWeight);
-            tree.saveToFile(id, [info]);
+            tree.saveToFile(outPath, [info]);
         } else if(algorithm == "prim") {
             auto tree = graph.prim(hasTree, treeWeight);
             auto info = format("The minimum tree has weight: %s", treeWeight);
-            tree.saveToFile(id, [info]);
+            tree.saveToFile(outPath, [info]);
         }
     } catch(Exception e) {
-        string outPath = format("./../data/%s-final.txt", id);
         auto outputFile = File(outPath, "w");
         // Header.
         outputFile.writeln("exception");
