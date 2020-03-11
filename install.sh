@@ -10,7 +10,7 @@ mkdir $data_dir
 # Making the Python environment.
 echo "Creating the virtual Python environment."
 python3 -m venv $env_name
-source ${data_dir}/bin/activate
+source $env_name/bin/activate
 pip install -r requirements.txt
 
 # Compiling the D library.
