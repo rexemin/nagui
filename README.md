@@ -29,7 +29,7 @@ After that, you can run `run.sh` to display the application locally.
 
 ### Using only Python
 
-If you don't have, or don't want to use, D, you can download a version of nagui with the D library precompiled here.
+If you don't have, or don't want to use, D, you can download a version of nagui with the D library precompiled [here](https://github.com/rexemin/nagui/releases).
 After that, enter the main directory of the application and run `run.sh`.
 If you don't already have a Python virtual environment, it will automatically create it.
 
