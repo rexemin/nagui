@@ -10,3 +10,9 @@ contents of `src/algo` are the actual implementations of
 the algorithms using the **D** language. Don't @ me for
 my programming language choices. I'm sick of C++, and so
 are you.
+
+- dash
+- dash_bootstrap_components
+- dash_cytoscape
+- numpy
+- networkx

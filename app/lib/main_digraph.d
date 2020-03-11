@@ -12,7 +12,6 @@ void main(string[] args)
 
     auto digraph = new Digraph!(string, long)();
     digraph = digraph.loadFromNxJSON(filePath);
-    digraph.print();
 
     bool cycleFound;
     long[string] shortestPaths;
@@ -32,7 +31,7 @@ void main(string[] args)
             digraph.saveFloydToFile(id, trees);
         }
     } catch(Exception e) {
-        string outPath = format("./../data/%s-final.txt", id);
+        string outPath = format("./data/%s-final.txt", id);
         auto outputFile = File(outPath, "w");
         // Header.
         outputFile.writeln("exception");

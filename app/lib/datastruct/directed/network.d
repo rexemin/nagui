@@ -321,7 +321,7 @@ class Network(EType) {
         import std.string: format;
         import std.algorithm.searching: canFind;
 
-        string filePath = format("./../data/%s-final.txt", id);
+        string filePath = format("./data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("network");

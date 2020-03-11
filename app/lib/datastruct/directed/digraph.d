@@ -453,7 +453,7 @@ class Digraph(VType, EType) {
         import std.stdio: File;
         import std.string: format;
 
-        string filePath = format("./../data/%s-final.txt", id);
+        string filePath = format("./data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("digraph");
@@ -499,7 +499,7 @@ class Digraph(VType, EType) {
         import std.stdio: File;
         import std.string: format;
 
-        string filePath = format("./../data/%s-final.txt", id);
+        string filePath = format("./data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("digraph");

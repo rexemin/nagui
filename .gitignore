@@ -1,23 +1,10 @@
 # D ignores
-.dub
-docs.json
-__dummy.html
-docs/
-/nagui
-nagui.so
-nagui.dylib
-nagui.dll
-nagui.a
-nagui.lib
-nagui-test-*
-*.exe
-*.o
-*.obj
-*.lst
+app/lib/bin/*.out
 
 # Python ignores
-env/
-src/__pycache__
-src/apps/__pycache__
+app/__pycache__/
+app/subapps/__pycache__/
+app/env/
 
-data/
+# General
+app/data/

@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 
 from nagui import app
-from apps import nagui_g, nagui_d, nagui_n
+from subapps import nagui_g, nagui_d, nagui_n
 
 
 app.layout = html.Div([
