@@ -17,29 +17,29 @@ void main(string[] args)
     long[string] productions;
     auto network = new Network!(long)();
     network = network.loadFromNxJSON(filePath, sources, sinks, vertexRestrictions, productions);
+    string outPath = format("./data/%s-final.txt", id);
 
     try{
         if(algorithm == "ford") {
             network = network.fordFulkerson(sources, sinks, vertexRestrictions, false);
             auto info = [format("Flow: %s. Cost: %s.", network.flow, network.cost)];
-            network.saveToFile(id, sources, sinks, vertexRestrictions, productions, info);
+            network.saveToFile(outPath, sources, sinks, vertexRestrictions, productions, info);
         } else if(algorithm == "mincycle") {
             network = network.minimumCostFlow(F, sources, sinks, vertexRestrictions, false);
             auto info = [format("Flow: %s. Cost: %s.", network.flow, network.cost)];
-            network.saveToFile(id, sources, sinks, vertexRestrictions, productions, info);
+            network.saveToFile(outPath, sources, sinks, vertexRestrictions, productions, info);
         } else if(algorithm == "minpaths") {
             bool solutionFound;
             network = network.minimumCostFlowWithShortestPaths(F, solutionFound, sources, sinks, vertexRestrictions, false);
             auto info = [format("Flow: %s. Cost: %s.", network.flow, network.cost)];
-            network.saveToFile(id, sources, sinks, vertexRestrictions, productions, info);
+            network.saveToFile(outPath, sources, sinks, vertexRestrictions, productions, info);
         } else if(algorithm == "simplex") {
             auto productionsCopy = productions.dup;
             network = network.simplex(productionsCopy);
             auto info = [format("Cost: %s.", network.cost)];
-            network.saveToFile(id, sources, sinks, vertexRestrictions, productions, info);
+            network.saveToFile(outPath, sources, sinks, vertexRestrictions, productions, info);
         }
     } catch(Exception e) {
-        string outPath = format("./data/%s-final.txt", id);
         auto outputFile = File(outPath, "w");
         // Header.
         outputFile.writeln("exception");

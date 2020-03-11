@@ -16,22 +16,22 @@ void main(string[] args)
     bool cycleFound;
     long[string] shortestPaths;
     string[string] previous;
+    string outPath = format("./data/%s-final.txt", id);
 
     try{
         if(algorithm == "dijkstra") {
             auto tree = digraph.dijkstra(start, cycleFound, shortestPaths, previous);
             if(cycleFound) {
-                tree.saveToFile(id, ["A negative cycle was found."]);
+                tree.saveToFile(outPath, ["A negative cycle was found."]);
             } else {
-                tree.saveToFile(id);
+                tree.saveToFile(outPath);
             }
         } else if(algorithm == "floyd") {
             auto dict = digraph.floyd();
             auto trees = digraph.getTreesFromDict(dict);
-            digraph.saveFloydToFile(id, trees);
+            digraph.saveFloydToFile(outPath, trees);
         }
     } catch(Exception e) {
-        string outPath = format("./data/%s-final.txt", id);
         auto outputFile = File(outPath, "w");
         // Header.
         outputFile.writeln("exception");

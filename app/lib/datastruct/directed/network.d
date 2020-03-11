@@ -308,20 +308,19 @@ class Network(EType) {
      *      footer -> end
      *
      * Params:
-     *      id = ID for the text file
+     *      filePath = Path to the file
      *      sources = Array with the sources of the network
      *      sinks = Array with the sinks of the network
      *      vertexRestrictions = Dictionary with the vertices' restrictions
      *      productions = Dictionary with the vertices' productions/demands
      *      additionalInfo = Additional information accompanying the network
      */
-    public void saveToFile(string id, string[] sources, string[] sinks, EType[][string] vertexRestrictions, EType[string] productions, string[] additionalInfo = null)
+    public void saveToFile(string filePath, string[] sources, string[] sinks, EType[][string] vertexRestrictions, EType[string] productions, string[] additionalInfo = null)
     {
         import std.stdio: File;
         import std.string: format;
         import std.algorithm.searching: canFind;
 
-        string filePath = format("./data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("network");

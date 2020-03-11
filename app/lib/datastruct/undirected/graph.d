@@ -279,14 +279,14 @@ class Graph(VType, EType) {
      *      footer -> end
      *
      * Params:
-     *      id = ID for the text file
+     *      filePath = Path to the file
+     *      additionalInfo = Additional information accompanying the graph
      */
-    public void saveToFile(string id, string[] additionalInfo = null)
+    public void saveToFile(string filePath, string[] additionalInfo = null)
     {
         import std.stdio: File;
         import std.string: format;
 
-        string filePath = format("./data/%s-final.txt", id);
         auto outputFile = File(filePath, "w");
         // Header.
         outputFile.writeln("graph");
